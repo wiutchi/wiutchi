@@ -112,13 +112,80 @@
             margin-top: -20px;
         }
 
-        /* Audio Visualizer Mimic */
-        .vis-bar {
-            width: 4px;
-            background: var(--red-orange);
-            margin: 0 1px;
-            height: 10px;
-            transition: height 0.05s ease;
+        /* Digital Tachometer (Initial D / MX-5 Style) */
+        .tachometer-container {
+            width: 150px;
+            height: 12px;
+            background: #111;
+            border: 1px solid var(--white);
+            position: relative;
+            display: flex;
+        }
+        .rpm-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--white);
+            transition: width 0.1s ease, background-color 0.1s ease;
+        }
+        .rpm-redline {
+            position: absolute;
+            right: 0;
+            width: 20%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                45deg,
+                var(--red-orange),
+                var(--red-orange) 4px,
+                transparent 4px,
+                transparent 8px
+            );
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* VA-11 Hall-A / Retro OS Borders */
+        .retro-os-panel {
+            border: 2px solid #555;
+            border-top-color: #aaa;
+            border-left-color: #aaa;
+            background: rgba(10, 10, 10, 0.95);
+            padding: 2px;
+        }
+        .retro-os-header {
+            background: var(--white);
+            color: var(--black);
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Boot Screen */
+        #boot-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--black);
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: crosshair;
+            transition: opacity 0.5s ease;
+        }
+        
+        .bureaucratic-box {
+            border: 2px solid var(--red-orange);
+            padding: 2rem;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255, 61, 0, 0.05) 10px,
+                rgba(255, 61, 0, 0.05) 20px
+            );
         }
 
         /* Custom Cursor */
@@ -133,108 +200,188 @@
     </style>
 </head>
 <body class="selection:bg-[#FF3D00] selection:text-white">
+    <!-- Boot Screen to bypass browser autoplay restrictions -->
+    <div id="boot-screen">
+        <div class="bureaucratic-box text-center max-w-md w-full">
+            <h2 class="text-[#FF3D00] font-bold text-4xl mb-4 tracking-widest heading">ACHTUNG</h2>
+            <div class="h-px w-full bg-[#FF3D00] mb-4"></div>
+            <p class="text-white text-sm mb-2 opacity-80">NAVI_OS // BLACK_BOX_SYNC // SYSTEM_INITIALISIERUNG</p>
+            <p class="text-[#FF3D00] text-xs mb-8 animate-pulse">AWAITING_USER_INPUT</p>
+            <button id="boot-btn" class="bg-[#FF3D00] text-black font-black px-8 py-3 w-full hover:bg-white transition-colors tracking-widest">CONNECT TO THE WIRED [KLICKEN]</button>
+        </div>
+    </div>
+
     <div class="scanline"></div>
 
-    <!-- Navigation (Minimalist top bar) -->
-    <nav class="fixed top-0 w-full z-50 px-4 py-4 flex justify-between items-center bg-black/80 border-b border-white/10 backdrop-blur-md">
-        <div class="heading text-xl flex items-center gap-2">
-            <span class="bg-[#FF3D00] text-black px-1 font-black">WIU</span>
-            <span>TCHI</span>
-        </div>
-        <div class="flex items-center gap-8">
-            <div id="visualizer" class="flex items-end h-4">
-                <div class="vis-bar"></div><div class="vis-bar"></div><div class="vis-bar"></div><div class="vis-bar"></div>
+    <!-- Navigation (Lain/VA-11 style top bar) -->
+    <nav class="fixed top-0 w-full z-50 px-4 py-4 flex flex-col md:flex-row justify-between items-center bg-black/90 border-b border-white/20 backdrop-blur-md gap-4">
+        <div class="flex items-center gap-4 w-full md:w-auto justify-between">
+            <div class="heading text-xl flex items-center gap-2">
+                <span class="bg-[#FF3D00] text-black px-1 font-black">WIU</span>
+                <span>TCHI</span>
             </div>
-            <button id="audio-toggle" class="text-[10px] tracking-widest font-bold">
-                [ SIGNAL: <span id="audio-status" class="text-red-600">MUTED</span> ]
+            <div class="text-[9px] text-[#FF3D00] border border-[#FF3D00] px-2 py-1 uppercase hidden md:block">
+                PRESENT DAY<br>PRESENT TIME
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
+            <!-- Tachometer Visualizer -->
+            <div class="flex flex-col gap-1">
+                <div class="flex justify-between text-[8px] font-bold tracking-widest text-white/50">
+                    <span>RPM</span>
+                    <span class="text-[#FF3D00]">REDLINE</span>
+                </div>
+                <div class="tachometer-container">
+                    <div id="rpm-bar" class="rpm-bar"></div>
+                    <div class="rpm-redline"></div>
+                </div>
+            </div>
+
+            <!-- Audio Toggle (Fixed) -->
+            <button id="audio-toggle" class="text-[12px] tracking-widest font-black border border-white/30 px-3 py-1 hover:bg-white hover:text-black transition-colors cursor-pointer bg-black text-white">
+                AUDIO: <span id="audio-status" class="text-green-500 animate-pulse">LIVE</span>
             </button>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="relative pt-32 px-4 md:px-12">
+    <main class="relative pt-40 px-4 md:px-12">
         
-        <!-- Hero: Machine Girl chaotic typography -->
-        <section class="mb-32 relative mt-16">
-            <div class="absolute -top-10 -left-10 opacity-20 pointer-events-none select-none">
-                <p class="text-[15rem] font-black leading-none text-[#FF3D00] animate-pulse">01</p>
+        <!-- Hero: Machine Girl / NieR chaotic typography -->
+        <section class="mb-32 relative mt-8">
+            <div class="absolute -top-10 -left-10 opacity-10 pointer-events-none select-none">
+                <p class="text-[12rem] font-black leading-none text-white tracking-tighter">NBFL</p>
             </div>
             
             <div class="relative z-10">
-                <p class="text-[#FF3D00] font-bold mb-2 flex items-center gap-2">
+                <p class="text-[#FF3D00] font-bold mb-2 flex items-center gap-2 text-xs">
                     <span class="w-2 h-2 bg-[#FF3D00] inline-block animate-ping"></span>
-                    / SYSTEM_OVERRIDE_PROTOCOL_ENABLED
+                    / BLACK_BOX_SIGNAL_DETECTED // GLORY_TO_MANKIND
                 </p>
-                <h1 id="hero-title" class="heading text-[clamp(3.5rem,12vw,10rem)] leading-[0.85] uppercase text-break italic" data-text="SOUND ARCHITECT">
+                <h1 id="hero-title" class="heading text-[clamp(3rem,10vw,8rem)] leading-[0.85] uppercase text-break italic" data-text="SOUND ARCHITECT">
                     SOUND<br>ARCHITECT
                 </h1>
                 
                 <div class="mt-8 flex flex-col md:flex-row gap-8 items-start">
-                    <div class="cyber-border p-6 max-w-sm relative">
-                        <div class="absolute top-0 right-0 bg-[#FF3D00] text-black text-[8px] font-black px-2 py-0.5 tracking-widest">WARNING</div>
-                        <p class="text-xs leading-relaxed opacity-70 mt-2">
-                            Digital fragmentation as a lifestyle. Wiutchi synthesizes industrial noise, breakcore percussion, and atmospheric, haunting textures into a singular assault on the senses.
-                        </p>
+                    <div class="retro-os-panel max-w-md w-full">
+                        <div class="retro-os-header">
+                            <span>wiutchi.exe // BIOS</span>
+                            <span>[X]</span>
+                        </div>
+                        <div class="p-4 relative bg-black">
+                            <div class="absolute top-2 right-2 bg-[#FF3D00] text-black text-[8px] font-black px-2 py-0.5 tracking-widest">LKP-93 // TOUGE</div>
+                            <p class="text-xs leading-relaxed opacity-80 mt-2 text-white">
+                                <span class="text-[#FF3D00]">></span> INITIALIZING AMEN_BREAK.dll...<br>
+                                <span class="text-[#FF3D00]">></span> OVERCLOCKING ROTARY ENGINE...<br>
+                                Wiutchi synthesizes extreme-BPM breakcore, melancholic android vocals, and hyper-kinetic rhythms. Drive fast. Don't look back. Close the world.
+                            </p>
+                        </div>
                     </div>
-                    <div class="flex flex-col gap-2 uppercase font-bold text-[10px] tracking-[0.3em]">
-                        <a href="#music" class="hover:text-[#FF3D00] border-l-2 border-transparent hover:border-[#FF3D00] pl-4 transition-all">01_STORAGE_AUDIO</a>
-                        <a href="#" class="hover:text-[#FF3D00] border-l-2 border-transparent hover:border-[#FF3D00] pl-4 transition-all">02_VISUAL_DECAY</a>
-                        <a href="#" class="hover:text-[#FF3D00] border-l-2 border-transparent hover:border-[#FF3D00] pl-4 transition-all">03_CONNECT_SIGNAL</a>
+                    
+                    <div class="flex flex-col gap-2 uppercase font-bold text-[10px] tracking-[0.3em] pt-2">
+                        <a href="#music" class="hover:text-[#FF3D00] border-l-2 border-transparent hover:border-[#FF3D00] pl-4 transition-all">01_MIXING_INTERFACE</a>
+                        <a href="#" class="hover:text-[#FF3D00] border-l-2 border-transparent hover:border-[#FF3D00] pl-4 transition-all">02_WIRED_PROTOCOL</a>
+                        <a href="#" class="hover:text-[#FF3D00] border-l-2 border-transparent hover:border-[#FF3D00] pl-4 transition-all">03_PROJECT_GESTALT</a>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Dynamic Marquee (Breakcore speed) -->
+        <!-- Dynamic Marquee (Initial D Speed) -->
         <div class="marquee-container py-2 overflow-hidden flex -mx-12 mb-32 border-y-4 border-black">
-            <div class="marquee whitespace-nowrap flex animate-[scroll_5s_linear_infinite] font-black text-black text-4xl italic">
-                DIGITAL DECAY // BREAKER // SYSTEM_FAIL // WIUTCHI // DIGITAL DECAY // BREAKER // SYSTEM_FAIL // WIUTCHI //&nbsp;
+            <div class="marquee whitespace-nowrap flex animate-[scroll_3s_linear_infinite] font-black text-black text-4xl italic">
+                WARNING // REDLINE_REACHED // OVERDRIVE // WARNING // REDLINE_REACHED // OVERDRIVE // WARNING // REDLINE_REACHED // OVERDRIVE //&nbsp;
             </div>
-            <div class="marquee whitespace-nowrap flex animate-[scroll_5s_linear_infinite] font-black text-black text-4xl italic">
-                DIGITAL DECAY // BREAKER // SYSTEM_FAIL // WIUTCHI // DIGITAL DECAY // BREAKER // SYSTEM_FAIL // WIUTCHI //&nbsp;
+            <div class="marquee whitespace-nowrap flex animate-[scroll_3s_linear_infinite] font-black text-black text-4xl italic">
+                WARNING // REDLINE_REACHED // OVERDRIVE // WARNING // REDLINE_REACHED // OVERDRIVE // WARNING // REDLINE_REACHED // OVERDRIVE //&nbsp;
             </div>
         </div>
 
-        <!-- Music Section -->
-        <section id="music" class="grid grid-cols-1 md:grid-cols-12 gap-8 mb-40">
-            <div class="md:col-span-4">
-                <div class="sticky top-24">
-                    <h2 class="heading text-5xl mb-4 text-[#FF3D00] flex items-center gap-3">DISCO<span class="w-5 h-10 bg-white animate-pulse block"></span></h2>
-                    <p class="text-xs opacity-50 mb-8 font-bold tracking-widest bg-[#FF3D00] text-black inline-block px-2 py-1">UNIT_DATA_EXTRACTED</p>
-                    <div class="w-full h-[1px] bg-white/20 mb-8"></div>
-                    <p class="text-sm italic">"The sound of a machine breaking in a quiet room."</p>
-                </div>
+        <!-- Music Section (VA-11 Hall-A Bartender UI Style) -->
+        <section id="music" class="mb-40">
+            <div class="mb-12">
+                <h2 class="heading text-5xl mb-4 text-[#FF3D00] flex items-center gap-3">MIXING_UI<span class="w-5 h-10 bg-white animate-pulse block"></span></h2>
+                <p class="text-xs opacity-50 mb-4 font-bold tracking-widest bg-white text-black inline-block px-2 py-1">AVAILABLE_DRINKS / TRACKS</p>
+                <div class="w-full h-[1px] bg-white/20 mb-4"></div>
+                <p class="text-sm italic">"Time to mix drinks and break hearts. Or eardrums."</p>
             </div>
 
-            <div class="md:col-span-8 space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Entry 1 -->
-                <div class="cyber-border group p-4 flex items-center gap-6 cursor-pointer overflow-hidden relative">
-                    <div class="w-20 h-20 bg-[#FF3D00] flex-shrink-0 flex items-center justify-center font-black text-2xl group-hover:scale-110 transition-transform">X</div>
-                    <div>
-                        <h3 class="heading text-2xl group-hover:text-[#FF3D00]">STRESS_TEST.wav</h3>
-                        <p class="text-[10px] opacity-40 uppercase">BPM: 195 // 2026 // BREAKCORE</p>
+                <div class="retro-os-panel group cursor-pointer">
+                    <div class="retro-os-header"><span>TRACK_01.wav</span><span>[ID: AE86]</span></div>
+                    <div class="p-4 bg-black group-hover:bg-[#FF3D00] group-hover:text-black transition-colors h-full flex flex-col justify-between">
+                        <div>
+                            <h3 class="heading text-2xl mb-2">TOUGE_DRIFT_2B</h3>
+                            <div class="text-[10px] space-y-1 opacity-70">
+                                <p>> INGREDIENT 1: AMEN BREAKS</p>
+                                <p>> INGREDIENT 2: EUROBEAT SYNTHS</p>
+                                <p>> FLAVOR: OVERSTEER</p>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-between items-end">
+                            <span class="font-black text-xl">210 BPM</span>
+                            <span class="text-[10px] border border-current px-1">SPEEDCORE</span>
+                        </div>
                     </div>
-                    <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity pr-4 font-black">PLAY_</div>
                 </div>
 
                 <!-- Entry 2 -->
-                <div class="cyber-border group p-4 flex items-center gap-6 cursor-pointer overflow-hidden relative">
-                    <div class="w-20 h-20 bg-white text-black flex-shrink-0 flex items-center justify-center font-black text-2xl group-hover:bg-[#FF3D00] transition-colors">Y</div>
-                    <div>
-                        <h3 class="heading text-2xl group-hover:text-[#FF3D00]">GHOST_IN_THE_ROOM</h3>
-                        <p class="text-[10px] opacity-40 uppercase">BPM: 140 // 2026 // AMBIENT_GRIND</p>
+                <div class="retro-os-panel group cursor-pointer">
+                    <div class="retro-os-header"><span>TRACK_02.wav</span><span>[ID: LAIN]</span></div>
+                    <div class="p-4 bg-black group-hover:bg-white group-hover:text-black transition-colors h-full flex flex-col justify-between">
+                        <div>
+                            <h3 class="heading text-2xl mb-2">NAVI_GHOST</h3>
+                            <div class="text-[10px] space-y-1 opacity-70">
+                                <p>> INGREDIENT 1: STATIC NOISE</p>
+                                <p>> INGREDIENT 2: DIAL-UP TONES</p>
+                                <p>> FLAVOR: ISOLATION</p>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-between items-end">
+                            <span class="font-black text-xl">160 BPM</span>
+                            <span class="text-[10px] border border-current px-1">DIGITAL_HARDCORE</span>
+                        </div>
                     </div>
-                    <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity pr-4 font-black">PLAY_</div>
                 </div>
 
                 <!-- Entry 3 -->
-                <div class="cyber-border group p-4 flex items-center gap-6 cursor-pointer overflow-hidden relative">
-                    <div class="w-20 h-20 bg-black border border-white flex-shrink-0 flex items-center justify-center font-black text-2xl group-hover:border-[#FF3D00] group-hover:text-[#FF3D00] transition-colors">Z</div>
-                    <div>
-                        <h3 class="heading text-2xl group-hover:text-[#FF3D00]">CRASH_BY_DESIGN</h3>
-                        <p class="text-[10px] opacity-40 uppercase">BPM: 220 // 2025 // SPEEDCORE</p>
+                <div class="retro-os-panel group cursor-pointer border-[#FF3D00]">
+                    <div class="retro-os-header bg-[#FF3D00] text-black"><span>CORRUPTED_FILE.exe</span><span>[ID: YORHA]</span></div>
+                    <div class="p-4 bg-black text-[#FF3D00] h-full flex flex-col justify-between">
+                        <div>
+                            <h3 class="heading text-2xl mb-2 text-break" data-text="REPLIKA_TEARS">REPLIKA_TEARS</h3>
+                            <div class="text-[10px] space-y-1 opacity-70">
+                                <p>> INGREDIENT 1: FLESH</p>
+                                <p>> INGREDIENT 2: METAL</p>
+                                <p>> FLAVOR: EXISTENTIAL DREAD</p>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-between items-end">
+                            <span class="font-black text-xl animate-pulse">ERR BPM</span>
+                            <span class="text-[10px] border border-[#FF3D00] px-1">NOISE</span>
+                        </div>
                     </div>
-                    <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity pr-4 font-black">PLAY_</div>
+                </div>
+                
+                <!-- Entry 4 -->
+                <div class="retro-os-panel group cursor-pointer">
+                    <div class="retro-os-header"><span>TRACK_04.wav</span><span>[ID: MIATA]</span></div>
+                    <div class="p-4 bg-black group-hover:bg-[#FF3D00] group-hover:text-black transition-colors h-full flex flex-col justify-between">
+                        <div>
+                            <h3 class="heading text-2xl mb-2">POP_UP_HEADLIGHTS</h3>
+                            <div class="text-[10px] space-y-1 opacity-70">
+                                <p>> INGREDIENT 1: HYPERPOP VOCALS</p>
+                                <p>> INGREDIENT 2: DISTORTED 808s</p>
+                                <p>> FLAVOR: STRXWBERRY</p>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-between items-end">
+                            <span class="font-black text-xl">185 BPM</span>
+                            <span class="text-[10px] border border-current px-1">GLITCHCORE</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -266,34 +413,33 @@
     </footer>
 
     <script>
-        // 1. IMPROVED AUDIO ENGINE (Breakcore/Overdrive focused)
+        // 1. IMPROVED AUDIO ENGINE (Car Revving + Breakcore focus)
         let audioCtx;
-        let oscillator, subOsc, gainNode, distortionNode, filterNode, bitcrushNode;
+        let oscillator, subOsc, gainNode, distortionNode, filterNode;
         let isAudioStarted = false;
+        let targetRPM = 0;
+        let currentRPM = 0;
 
         function makeDistortionCurve(amount) {
             const n_samples = 44100;
             const curve = new Float32Array(n_samples);
             for (let i = 0; i < n_samples; ++i) {
                 const x = (i * 2) / n_samples - 1;
-                // High-gain asymmetrical distortion
                 curve[i] = ((3 + amount) * x * 20 * (Math.PI / 180)) / (Math.PI + amount * Math.abs(x));
             }
             return curve;
         }
 
         async function initAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            
-            if (isAudioStarted) {
-                audioCtx.suspend();
-                document.getElementById('audio-status').innerText = "MUTED";
-                document.getElementById('audio-status').className = "text-red-600";
-                isAudioStarted = false;
-                return;
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
 
-            await audioCtx.resume();
+            if (audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+            }
+
+            if (isAudioStarted) return; // Prevent double node creation
 
             oscillator = audioCtx.createOscillator();
             subOsc = audioCtx.createOscillator();
@@ -301,20 +447,21 @@
             distortionNode = audioCtx.createWaveShaper();
             filterNode = audioCtx.createBiquadFilter();
 
+            // Like an idling engine
             oscillator.type = 'sawtooth';
             oscillator.frequency.setValueAtTime(50, audioCtx.currentTime); 
             
-            subOsc.type = 'sine';
-            subOsc.frequency.setValueAtTime(45, audioCtx.currentTime);
+            subOsc.type = 'square';
+            subOsc.frequency.setValueAtTime(25, audioCtx.currentTime);
 
             filterNode.type = 'lowpass';
-            filterNode.frequency.setValueAtTime(300, audioCtx.currentTime);
-            filterNode.Q.setValueAtTime(10, audioCtx.currentTime);
+            filterNode.frequency.setValueAtTime(400, audioCtx.currentTime);
+            filterNode.Q.setValueAtTime(5, audioCtx.currentTime);
 
-            distortionNode.curve = makeDistortionCurve(10);
+            distortionNode.curve = makeDistortionCurve(50);
             
             gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.5);
+            gainNode.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.5);
 
             oscillator.connect(distortionNode);
             subOsc.connect(distortionNode);
@@ -325,43 +472,97 @@
             oscillator.start();
             subOsc.start();
             
-            document.getElementById('audio-status').innerText = "LIVE";
-            document.getElementById('audio-status').className = "text-green-500 animate-pulse";
             isAudioStarted = true;
             animateVisualizer();
         }
 
-        document.getElementById('audio-toggle').addEventListener('click', initAudio);
+        // BOOT SCREEN LOGIC
+        document.getElementById('boot-btn').addEventListener('click', async () => {
+            await initAudio();
+            const bootScreen = document.getElementById('boot-screen');
+            bootScreen.style.opacity = '0';
+            document.getElementById('audio-status').innerText = 'LIVE';
+            document.getElementById('audio-status').className = 'text-green-500 animate-pulse';
+            setTimeout(() => {
+                bootScreen.style.display = 'none';
+            }, 500);
+        });
 
-        // 2. BREAKCORE OVERDRIVE INTERACTION
+        // PROPER AUDIO TOGGLE LOGIC
+        document.getElementById('audio-toggle').addEventListener('click', async () => {
+            if (!audioCtx) return;
+            
+            const statusSpan = document.getElementById('audio-status');
+            
+            if (audioCtx.state === 'running') {
+                await audioCtx.suspend();
+                statusSpan.innerText = 'MUTED';
+                statusSpan.className = 'text-red-600';
+            } else if (audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+                statusSpan.innerText = 'LIVE';
+                statusSpan.className = 'text-green-500 animate-pulse';
+            }
+        });
+
+        // 2. REDLINE / ACCELERATION INTERACTION (Hovering acts like hitting the gas)
         const heroTitle = document.getElementById('hero-title');
         
         heroTitle.addEventListener('mouseenter', () => {
-            if (!isAudioStarted) return;
+            targetRPM = 100; // Redline
+            if (!isAudioStarted || audioCtx.state !== 'running') return;
+            
             const now = audioCtx.currentTime;
-            distortionNode.curve = makeDistortionCurve(600); // Intense crunch
-            filterNode.frequency.exponentialRampToValueAtTime(8000, now + 0.1); // Open screaming filter
-            oscillator.frequency.exponentialRampToValueAtTime(70, now + 0.1); // Pitch slide up
+            // Car accelerating / Pitch bending up like a rotary engine
+            oscillator.frequency.exponentialRampToValueAtTime(200, now + 1.5); 
+            subOsc.frequency.exponentialRampToValueAtTime(100, now + 1.5);
+            // Open the filter and crunch it
+            distortionNode.curve = makeDistortionCurve(800); 
+            filterNode.frequency.exponentialRampToValueAtTime(8000, now + 0.5); 
         });
 
         heroTitle.addEventListener('mouseleave', () => {
-            if (!isAudioStarted) return;
+            targetRPM = 15; // Idle
+            if (!isAudioStarted || audioCtx.state !== 'running') return;
+            
             const now = audioCtx.currentTime;
-            distortionNode.curve = makeDistortionCurve(10);
-            filterNode.frequency.exponentialRampToValueAtTime(300, now + 0.4);
-            oscillator.frequency.exponentialRampToValueAtTime(50, now + 0.4);
+            // Engine braking / slowing down
+            oscillator.frequency.exponentialRampToValueAtTime(50, now + 1);
+            subOsc.frequency.exponentialRampToValueAtTime(25, now + 1);
+            distortionNode.curve = makeDistortionCurve(50);
+            filterNode.frequency.exponentialRampToValueAtTime(400, now + 1);
         });
 
-        // 3. VISUALIZER SYNC
+        // 3. TACHOMETER SYNC
         function animateVisualizer() {
             if (!isAudioStarted) return;
-            const bars = document.querySelectorAll('.vis-bar');
-            bars.forEach(bar => {
-                const h = Math.random() * 20 + 2;
-                bar.style.height = `${h}px`;
-            });
-            setTimeout(animateVisualizer, 80);
+            
+            // Smoothly interpolate RPM
+            currentRPM += (targetRPM - currentRPM) * 0.1;
+            
+            // Add a little idle fluctuation
+            let displayRPM = currentRPM;
+            if (targetRPM === 0 || targetRPM === 15) {
+                displayRPM = 15 + (Math.random() * 5); // Idle bouncing
+            } else if (currentRPM > 80) {
+                displayRPM = currentRPM + (Math.random() * 10 - 5); // Redline bouncing
+            }
+
+            const rpmBar = document.getElementById('rpm-bar');
+            rpmBar.style.width = `${Math.min(100, displayRPM)}%`;
+
+            // Change color if redlining
+            if (displayRPM > 80) {
+                rpmBar.style.backgroundColor = 'var(--red-orange)';
+            } else {
+                rpmBar.style.backgroundColor = 'var(--white)';
+            }
+
+            setTimeout(animateVisualizer, 50);
         }
+
+        // Initialize target RPM so it idles immediately
+        targetRPM = 15;
 
         // 4. MOUSE PARALLAX (Subtle visual distortion aesthetic)
         document.addEventListener('mousemove', (e) => {
