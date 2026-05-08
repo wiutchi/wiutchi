@@ -21,7 +21,7 @@
             color: var(--white);
             font-family: 'Space Mono', monospace;
             overflow-x: hidden;
-            background-image: radial-gradient(circle at 50% 50%, #1a0a00 0%, #050505 100%);
+            background-image: radial-gradient(circle at 50% 30%, #1a0a00 0%, #050505 100%);
         }
 
         .heading { font-family: 'Syncopate', sans-serif; letter-spacing: -2px; }
@@ -36,6 +36,31 @@
             55% { opacity: 0.8; }
             60% { opacity: 0.98; }
             100% { opacity: 1; }
+        }
+
+        /* Perspective Grid (The "Touge" / Wired Highway) */
+        .perspective-grid {
+            position: fixed;
+            bottom: -50%;
+            left: -50%;
+            width: 200%;
+            height: 100%;
+            background-image:
+                linear-gradient(var(--red-orange) 1px, transparent 1px),
+                linear-gradient(90deg, var(--red-orange) 1px, transparent 1px);
+            background-size: 60px 40px;
+            transform: perspective(300px) rotateX(80deg);
+            animation: moveGrid 0.8s linear infinite;
+            opacity: 0.15;
+            z-index: 0;
+            pointer-events: none;
+            mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 60%);
+            -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 60%);
+        }
+
+        @keyframes moveGrid {
+            0% { transform: perspective(300px) rotateX(80deg) translateY(0); }
+            100% { transform: perspective(300px) rotateX(80deg) translateY(40px); }
         }
 
         /* Scanning Line Effect */
@@ -73,37 +98,28 @@
             background: rgba(0,0,0,0.8);
             transition: 0.1s;
         }
-        .cyber-border:hover {
-            border-color: var(--red-orange);
-            background: rgba(255, 61, 0, 0.1);
-        }
 
         /* Machine Girl Style Glitch */
         .text-break {
             position: relative;
             display: inline-block;
         }
-        .text-break:hover::after {
+        .text-break:hover::after, .glitch-active::after {
             content: attr(data-text);
             position: absolute;
             left: 2px;
-            text-shadow: -1px 0 red;
+            text-shadow: -1px 0 red, 1px 0 cyan;
             top: 0;
             color: white;
             background: var(--black);
             overflow: hidden;
             clip: rect(0, 900px, 0, 0);
-            animation: noise-anim 2s infinite linear alternate-reverse;
+            animation: noise-anim 1s infinite linear alternate-reverse;
         }
 
         @keyframes noise-anim {
-            0% { clip: rect(12px, 9999px, 94px, 0); }
-            100% { clip: rect(44px, 9999px, 12px, 0); }
-        }
-
-        .noise-svg {
-            filter: contrast(150%) brightness(1000%);
-            mix-blend-mode: overlay;
+            0% { clip: rect(12px, 9999px, 94px, 0); transform: translate(1px, -1px); }
+            100% { clip: rect(44px, 9999px, 12px, 0); transform: translate(-1px, 1px); }
         }
 
         .marquee-container {
@@ -112,7 +128,7 @@
             margin-top: -20px;
         }
 
-        /* Digital Tachometer (Initial D / MX-5 Style) */
+        /* Digital Tachometer */
         .tachometer-container {
             width: 150px;
             height: 12px;
@@ -150,6 +166,13 @@
             border-left-color: #aaa;
             background: rgba(10, 10, 10, 0.95);
             padding: 2px;
+            /* Removed CSS transition for transform so JS 3D tilt is smooth */
+            transition: border-color 0.1s, box-shadow 0.1s;
+            transform-style: preserve-3d;
+        }
+        .retro-os-panel:hover {
+            box-shadow: 4px 4px 0 rgba(255, 61, 0, 0.5);
+            border-color: var(--white);
         }
         .retro-os-header {
             background: var(--white);
@@ -188,6 +211,70 @@
             );
         }
 
+        /* Terminal Output Log */
+        #terminal-log {
+            mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 20%);
+            -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 20%);
+        }
+        .log-entry {
+            animation: slideIn 0.2s ease-out forwards;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(-10px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Subliminal Message Flashes (Signalis/Lain) */
+        #subliminal {
+            position: fixed; inset: 0; z-index: 9999999;
+            background: var(--white); color: var(--black);
+            display: flex; justify-content: center; align-items: center;
+            font-family: 'Syncopate', sans-serif; font-size: 15vw; font-weight: 900;
+            opacity: 0; pointer-events: none; text-transform: uppercase;
+        }
+        .flash-anim {
+            animation: flashFrame 0.15s steps(2) forwards;
+        }
+        @keyframes flashFrame {
+            0% { opacity: 1; filter: invert(1) drop-shadow(10px 0 cyan) drop-shadow(-10px 0 red); }
+            50% { opacity: 1; filter: invert(0); transform: scale(1.1) skew(5deg); }
+            100% { opacity: 0; }
+        }
+
+        /* Severe Glitch Effect (Signalis / Sync Drop) */
+        .global-glitch {
+            animation: severe-glitch 0.2s infinite;
+            filter: hue-rotate(90deg) contrast(150%);
+        }
+        .global-glitch .perspective-grid {
+            background-image:
+                linear-gradient(cyan 1px, transparent 1px),
+                linear-gradient(90deg, cyan 1px, transparent 1px);
+        }
+        @keyframes severe-glitch {
+            0% { transform: translate(0, 0) skew(0deg); }
+            20% { transform: translate(-3px, 1px) skew(-2deg); }
+            40% { transform: translate(3px, -1px) skew(2deg); }
+            60% { transform: translate(-1px, 3px) skew(0deg); }
+            80% { transform: translate(1px, -3px) skew(1deg); }
+            100% { transform: translate(0, 0) skew(0deg); }
+        }
+
+        /* ASCII Art */
+        .ascii-art {
+            white-space: pre;
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            line-height: 10px;
+            color: var(--red-orange);
+            font-weight: bold;
+            cursor: crosshair;
+        }
+        .ascii-art:hover {
+            color: var(--white);
+            text-shadow: 0 0 10px var(--white);
+        }
+
         /* Custom Cursor */
         body {
             cursor: crosshair;
@@ -199,21 +286,33 @@
         }
     </style>
 </head>
-<body class="selection:bg-[#FF3D00] selection:text-white">
-    <!-- Boot Screen to bypass browser autoplay restrictions -->
+<body class="selection:bg-[#FF3D00] selection:text-white relative">
+    
+    <!-- Subliminal Layer -->
+    <div id="subliminal">WAKE UP</div>
+
+    <!-- Perspective Background Grid -->
+    <div class="perspective-grid"></div>
+
+    <!-- Live Terminal Log -->
+    <div id="terminal-log" class="fixed bottom-4 left-4 z-40 text-[10px] text-[#FF3D00] font-bold tracking-widest uppercase flex flex-col justify-end w-64 h-32 pointer-events-none opacity-80">
+        <!-- JS injects logs here -->
+    </div>
+
+    <!-- Boot Screen -->
     <div id="boot-screen">
         <div class="bureaucratic-box text-center max-w-md w-full">
             <h2 class="text-[#FF3D00] font-bold text-4xl mb-4 tracking-widest heading">ACHTUNG</h2>
             <div class="h-px w-full bg-[#FF3D00] mb-4"></div>
             <p class="text-white text-sm mb-2 opacity-80">NAVI_OS // BLACK_BOX_SYNC // SYSTEM_INITIALISIERUNG</p>
             <p class="text-[#FF3D00] text-xs mb-8 animate-pulse">AWAITING_USER_INPUT</p>
-            <button id="boot-btn" class="bg-[#FF3D00] text-black font-black px-8 py-3 w-full hover:bg-white transition-colors tracking-widest">CONNECT TO THE WIRED [KLICKEN]</button>
+            <button id="boot-btn" class="bg-[#FF3D00] text-black font-black px-8 py-3 w-full hover:bg-white transition-colors tracking-widest interactive-element" data-log="ESTABLISHING CONNECTION TO THE WIRED...">CONNECT TO THE WIRED [KLICKEN]</button>
         </div>
     </div>
 
     <div class="scanline"></div>
 
-    <!-- Navigation (Lain/VA-11 style top bar) -->
+    <!-- Navigation -->
     <nav class="fixed top-0 w-full z-50 px-4 py-4 flex flex-col md:flex-row justify-between items-center bg-black/90 border-b border-white/20 backdrop-blur-md gap-4">
         <div class="flex items-center gap-4 w-full md:w-auto justify-between">
             <div class="heading text-xl flex items-center gap-2">
@@ -221,7 +320,7 @@
                 <span>TCHI</span>
             </div>
             <div class="text-[9px] text-[#FF3D00] border border-[#FF3D00] px-2 py-1 uppercase hidden md:block">
-                PRESENT DAY<br>PRESENT TIME
+                SYNC: <span id="sync-rate" class="animate-pulse">85.4</span>%
             </div>
         </div>
         
@@ -238,19 +337,19 @@
                 </div>
             </div>
 
-            <!-- Audio Toggle (Fixed) -->
-            <button id="audio-toggle" class="text-[12px] tracking-widest font-black border border-white/30 px-3 py-1 hover:bg-white hover:text-black transition-colors cursor-pointer bg-black text-white">
+            <!-- Audio Toggle -->
+            <button id="audio-toggle" class="interactive-element text-[12px] tracking-widest font-black border border-white/30 px-3 py-1 hover:bg-white hover:text-black transition-colors bg-black text-white" data-log="TOGGLING AUDIO INTERFACE">
                 AUDIO: <span id="audio-status" class="text-green-500 animate-pulse">LIVE</span>
             </button>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="relative pt-40 px-4 md:px-12">
+    <main class="relative z-10 pt-40 px-4 md:px-12">
         
-        <!-- Hero: Machine Girl / NieR chaotic typography -->
+        <!-- Hero Section -->
         <section class="mb-32 relative mt-8">
-            <div class="absolute -top-10 -left-10 opacity-10 pointer-events-none select-none">
+            <div class="absolute -top-10 -left-10 opacity-[0.03] pointer-events-none select-none">
                 <p class="text-[12rem] font-black leading-none text-white tracking-tighter">NBFL</p>
             </div>
             
@@ -259,18 +358,29 @@
                     <span class="w-2 h-2 bg-[#FF3D00] inline-block animate-ping"></span>
                     / BLACK_BOX_SIGNAL_DETECTED // GLORY_TO_MANKIND
                 </p>
-                <h1 id="hero-title" class="heading text-[clamp(3rem,10vw,8rem)] leading-[0.85] uppercase text-break italic" data-text="SOUND ARCHITECT">
+                <h1 id="hero-title" class="interactive-element heading text-[clamp(3rem,10vw,8rem)] leading-[0.85] uppercase text-break italic" data-text="SOUND ARCHITECT" data-log="MAXIMUM OVERDRIVE INITIATED // REDLINE REACHED">
                     SOUND<br>ARCHITECT
                 </h1>
                 
                 <div class="mt-8 flex flex-col md:flex-row gap-8 items-start">
-                    <div class="retro-os-panel max-w-md w-full">
+                    <div class="retro-os-panel max-w-md w-full interactive-element" data-log="ACCESSING SYSTEM BIOS">
                         <div class="retro-os-header">
                             <span>wiutchi.exe // BIOS</span>
                             <span>[X]</span>
                         </div>
                         <div class="p-4 relative bg-black">
                             <div class="absolute top-2 right-2 bg-[#FF3D00] text-black text-[8px] font-black px-2 py-0.5 tracking-widest">LKP-93 // TOUGE</div>
+                            
+                            <!-- ASCII Graphic -->
+                            <div id="core-dump-trigger" class="ascii-art text-center mb-4 select-none opacity-80 mt-2 animate-pulse interactive-element" data-log="WARNING: UNSTABLE MEMORY BLOCK">
+       /\
+      /  \
+     /____\
+     \    /
+      \  /
+       \/
+                            </div>
+
                             <p class="text-xs leading-relaxed opacity-80 mt-2 text-white">
                                 <span class="text-[#FF3D00]">></span> INITIALIZING AMEN_BREAK.dll...<br>
                                 <span class="text-[#FF3D00]">></span> OVERCLOCKING ROTARY ENGINE...<br>
@@ -280,15 +390,15 @@
                     </div>
                     
                     <div class="flex flex-col gap-2 uppercase font-bold text-[10px] tracking-[0.3em] pt-2">
-                        <a href="#music" class="hover:text-[#FF3D00] border-l-2 border-transparent hover:border-[#FF3D00] pl-4 transition-all">01_MIXING_INTERFACE</a>
-                        <a href="#" class="hover:text-[#FF3D00] border-l-2 border-transparent hover:border-[#FF3D00] pl-4 transition-all">02_WIRED_PROTOCOL</a>
-                        <a href="#" class="hover:text-[#FF3D00] border-l-2 border-transparent hover:border-[#FF3D00] pl-4 transition-all">03_PROJECT_GESTALT</a>
+                        <a href="#music" class="interactive-element hover:text-[#FF3D00] border-l-2 border-transparent hover:border-[#FF3D00] pl-4 transition-all" data-log="ROUTING TO MIXING INTERFACE">01_MIXING_INTERFACE</a>
+                        <a href="#" class="interactive-element hover:text-[#FF3D00] border-l-2 border-transparent hover:border-[#FF3D00] pl-4 transition-all" data-log="ROUTING TO WIRED PROTOCOL">02_WIRED_PROTOCOL</a>
+                        <a href="#" class="interactive-element hover:text-[#FF3D00] border-l-2 border-transparent hover:border-[#FF3D00] pl-4 transition-all" data-log="ACCESSING PROJECT GESTALT DOCUMENTS">03_PROJECT_GESTALT</a>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Dynamic Marquee (Initial D Speed) -->
+        <!-- Dynamic Marquee -->
         <div class="marquee-container py-2 overflow-hidden flex -mx-12 mb-32 border-y-4 border-black">
             <div class="marquee whitespace-nowrap flex animate-[scroll_3s_linear_infinite] font-black text-black text-4xl italic">
                 WARNING // REDLINE_REACHED // OVERDRIVE // WARNING // REDLINE_REACHED // OVERDRIVE // WARNING // REDLINE_REACHED // OVERDRIVE //&nbsp;
@@ -298,8 +408,8 @@
             </div>
         </div>
 
-        <!-- Music Section (VA-11 Hall-A Bartender UI Style) -->
-        <section id="music" class="mb-40">
+        <!-- Music Section -->
+        <section id="music" class="mb-40 relative z-10 bg-black/60 backdrop-blur-sm p-4 md:p-8 border border-white/10">
             <div class="mb-12">
                 <h2 class="heading text-5xl mb-4 text-[#FF3D00] flex items-center gap-3">MIXING_UI<span class="w-5 h-10 bg-white animate-pulse block"></span></h2>
                 <p class="text-xs opacity-50 mb-4 font-bold tracking-widest bg-white text-black inline-block px-2 py-1">AVAILABLE_DRINKS / TRACKS</p>
@@ -308,12 +418,12 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Entry 1 -->
-                <div class="retro-os-panel group cursor-pointer">
+                <!-- Track 1 -->
+                <div class="retro-os-panel group cursor-pointer interactive-element track-card" data-rpm="95" data-log="LOADING [TOUGE_DRIFT_2B] // RPM: 210BPM (SPEEDCORE)">
                     <div class="retro-os-header"><span>TRACK_01.wav</span><span>[ID: AE86]</span></div>
                     <div class="p-4 bg-black group-hover:bg-[#FF3D00] group-hover:text-black transition-colors h-full flex flex-col justify-between">
                         <div>
-                            <h3 class="heading text-2xl mb-2">TOUGE_DRIFT_2B</h3>
+                            <h3 class="heading text-2xl mb-2 text-break" data-text="TOUGE_DRIFT_2B">TOUGE_DRIFT_2B</h3>
                             <div class="text-[10px] space-y-1 opacity-70">
                                 <p>> INGREDIENT 1: AMEN BREAKS</p>
                                 <p>> INGREDIENT 2: EUROBEAT SYNTHS</p>
@@ -327,12 +437,12 @@
                     </div>
                 </div>
 
-                <!-- Entry 2 -->
-                <div class="retro-os-panel group cursor-pointer">
+                <!-- Track 2 -->
+                <div class="retro-os-panel group cursor-pointer interactive-element track-card" data-rpm="40" data-log="LOADING [NAVI_GHOST] // RPM: 160BPM (D-HARDCORE)">
                     <div class="retro-os-header"><span>TRACK_02.wav</span><span>[ID: LAIN]</span></div>
                     <div class="p-4 bg-black group-hover:bg-white group-hover:text-black transition-colors h-full flex flex-col justify-between">
                         <div>
-                            <h3 class="heading text-2xl mb-2">NAVI_GHOST</h3>
+                            <h3 class="heading text-2xl mb-2 text-break" data-text="NAVI_GHOST">NAVI_GHOST</h3>
                             <div class="text-[10px] space-y-1 opacity-70">
                                 <p>> INGREDIENT 1: STATIC NOISE</p>
                                 <p>> INGREDIENT 2: DIAL-UP TONES</p>
@@ -346,8 +456,8 @@
                     </div>
                 </div>
 
-                <!-- Entry 3 -->
-                <div class="retro-os-panel group cursor-pointer border-[#FF3D00]">
+                <!-- Track 3 -->
+                <div class="retro-os-panel group cursor-pointer interactive-element track-card border-[#FF3D00]" data-rpm="80" data-log="WARNING: CORRUPTED DATA_ [REPLIKA_TEARS] // SYNC DROP">
                     <div class="retro-os-header bg-[#FF3D00] text-black"><span>CORRUPTED_FILE.exe</span><span>[ID: YORHA]</span></div>
                     <div class="p-4 bg-black text-[#FF3D00] h-full flex flex-col justify-between">
                         <div>
@@ -365,12 +475,12 @@
                     </div>
                 </div>
                 
-                <!-- Entry 4 -->
-                <div class="retro-os-panel group cursor-pointer">
+                <!-- Track 4 -->
+                <div class="retro-os-panel group cursor-pointer interactive-element track-card" data-rpm="70" data-log="LOADING [POP_UP_HEADLIGHTS] // RPM: 185BPM (GLITCHCORE)">
                     <div class="retro-os-header"><span>TRACK_04.wav</span><span>[ID: MIATA]</span></div>
                     <div class="p-4 bg-black group-hover:bg-[#FF3D00] group-hover:text-black transition-colors h-full flex flex-col justify-between">
                         <div>
-                            <h3 class="heading text-2xl mb-2">POP_UP_HEADLIGHTS</h3>
+                            <h3 class="heading text-2xl mb-2 text-break" data-text="POP_UP_HEADLIGHTS">POP_UP_HEADLIGHTS</h3>
                             <div class="text-[10px] space-y-1 opacity-70">
                                 <p>> INGREDIENT 1: HYPERPOP VOCALS</p>
                                 <p>> INGREDIENT 2: DISTORTED 808s</p>
@@ -386,36 +496,117 @@
             </div>
         </section>
 
-        <!-- Newsletter (The 'Signal') -->
-        <section class="max-w-4xl mx-auto mb-40 text-center">
-            <div class="bg-[#FF3D00] text-black p-12 relative overflow-hidden">
-                <div class="absolute top-0 left-0 text-[10rem] opacity-10 font-black pointer-events-none select-none italic">SIGNAL</div>
-                <h2 class="heading text-6xl mb-6 relative z-10">GET THE DATA</h2>
-                <p class="mb-8 font-bold tracking-widest relative z-10">UNRELEASED BREAKS / PATCHES / LIVE NODES</p>
-                <div class="flex flex-col md:flex-row gap-0 border-4 border-black relative z-10">
-                    <input type="email" placeholder="YOUR_EMAIL@NODE.COM" class="flex-grow p-4 bg-transparent border-none placeholder:text-black/50 text-black font-black uppercase focus:outline-none">
-                    <button class="bg-black text-white p-4 px-12 font-black hover:bg-white hover:text-black transition-colors uppercase">Initialize</button>
+        <!-- PROJECT GESTALT (Lore/Archive) -->
+        <section id="gestalt" class="mb-40 relative z-10 p-4 md:p-8 bg-[#FF3D00] text-black retro-os-panel interactive-element" data-log="DECRYPTING CLASSIFIED DOCUMENTS... [PROJECT GESTALT]">
+            <div class="retro-os-header !bg-black !text-[#FF3D00]"><span>ARCHIVE_LOG.txt</span><span>[READ-ONLY]</span></div>
+            <div class="mt-4 border-4 border-black p-6 bg-[#FF3D00] relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 text-[8rem] opacity-10 font-black italic select-none">GESTALT</div>
+                <h2 class="heading text-4xl mb-4 border-b-4 border-black pb-2">PROJECT_GESTALT</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 font-mono text-xs md:text-sm relative z-10">
+                    <div>
+                        <p class="font-bold border border-black p-1 inline-block mb-2 uppercase bg-black text-[#FF3D00]">ENTRY: 9942 // DEGRADATION</p>
+                        <p class="text-justify leading-relaxed font-bold">
+                            The separation of consciousness and the <span class="bg-black text-[#FF3D00] px-1">digital vessel</span> has caused severe frequency degradation. 210 BPM is the minimum required speed to maintain structural integrity of the Replika units. Do not let the RPM fall. If SYNC drops below 50%, the Wired will consume the host.
+                        </p>
+                    </div>
+                    <div class="border-l-4 border-black pl-4">
+                        <p class="font-bold border border-black p-1 inline-block mb-2 uppercase bg-black text-[#FF3D00]">DIAGNOSTIC OVERVIEW</p>
+                        <div class="space-y-2 font-bold">
+                            <div class="flex justify-between border-b border-black/30 pb-1"><span>AMEN_BREAK.dll</span><span>[OK]</span></div>
+                            <div class="flex justify-between border-b border-black/30 pb-1"><span>DISTORTION_NODE</span><span>[OK]</span></div>
+                            <div class="flex justify-between border-b border-black/30 pb-1"><span>ROTARY_ENGINE_SIM</span><span>[OK]</span></div>
+                            <div class="flex justify-between text-white bg-black px-1 mt-2 animate-pulse"><span>HUMANITY</span><span>[ERR_NOT_FOUND]</span></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
+        <!-- Newsletter (The 'Signal') -->
+        <section class="max-w-4xl mx-auto mb-40 text-center relative z-10">
+            <div class="bg-[#FF3D00] text-black p-12 relative overflow-hidden interactive-element" data-log="INITIATING DATA TRANSFER SEQUENCE">
+                <div class="absolute top-0 left-0 text-[10rem] opacity-10 font-black pointer-events-none select-none italic">SIGNAL</div>
+                <h2 class="heading text-6xl mb-6 relative z-10">GET THE DATA</h2>
+                <p class="mb-8 font-bold tracking-widest relative z-10">UNRELEASED BREAKS / PATCHES / LIVE NODES</p>
+                <div class="flex flex-col md:flex-row gap-0 border-4 border-black relative z-10 shadow-[8px_8px_0_rgba(0,0,0,1)]">
+                    <input type="email" placeholder="YOUR_EMAIL@NODE.COM" class="flex-grow p-4 bg-transparent border-none placeholder:text-black/50 text-black font-black uppercase focus:outline-none">
+                    <button class="bg-black text-white p-4 px-12 font-black hover:bg-white hover:text-black transition-colors uppercase interactive-element" data-log="TRANSMITTING... ERROR: ENDPOINT REJECTED">Initialize</button>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- Footer -->
-    <footer class="p-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] opacity-50 font-bold uppercase tracking-widest">
+    <footer class="relative z-10 p-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] opacity-50 font-bold uppercase tracking-widest bg-black">
         <div>© 2026_WIUTCHI // POWERED_BY_NOISE</div>
         <div class="flex gap-8">
-            <a href="#" class="hover:text-[#FF3D00]">Instagram</a>
-            <a href="#" class="hover:text-[#FF3D00]">Soundcloud</a>
-            <a href="#" class="hover:text-[#FF3D00]">Spotify</a>
+            <a href="#" class="interactive-element hover:text-[#FF3D00]" data-log="ROUTING EXTERNAL: INSTAGRAM">Instagram</a>
+            <a href="#" class="interactive-element hover:text-[#FF3D00]" data-log="ROUTING EXTERNAL: SOUNDCLOUD">Soundcloud</a>
+            <a href="#" class="interactive-element hover:text-[#FF3D00]" data-log="ROUTING EXTERNAL: SPOTIFY">Spotify</a>
         </div>
         <div>STAY_ONLINE_STAY_BROKEN</div>
     </footer>
 
     <script>
-        // 1. IMPROVED AUDIO ENGINE (Car Revving + Breakcore focus)
+        // 1. TERMINAL LOG SYSTEM
+        const logContainer = document.getElementById('terminal-log');
+        let logCounter = 0;
+
+        function logToTerminal(msg) {
+            const el = document.createElement('div');
+            el.className = 'log-entry mb-1';
+            el.innerHTML = `> ${msg}`;
+            logContainer.appendChild(el);
+            
+            // Keep only the last 5 logs
+            if (logContainer.children.length > 5) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+        }
+
+        // 2. UI AUDIO BEEP (VA-11 / NieR UI Feel)
+        function playUIBeep(freq = 1200, type = 'square') {
+            if (!audioCtx || audioCtx.state !== 'running' || !isAudioStarted) return;
+            const beepOsc = audioCtx.createOscillator();
+            const beepGain = audioCtx.createGain();
+            beepOsc.type = type;
+            beepOsc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            // Very short, quiet beep
+            beepGain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+            beepGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+            
+            beepOsc.connect(beepGain);
+            beepGain.connect(audioCtx.destination);
+            beepOsc.start();
+            beepOsc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        // Attach Interactions to UI elements
+        document.querySelectorAll('.interactive-element').forEach(el => {
+            el.addEventListener('mouseenter', (e) => {
+                // UI Beep
+                playUIBeep();
+                
+                // Print to terminal if data-log exists
+                if (el.dataset.log) {
+                    logToTerminal(el.dataset.log);
+                }
+
+                // Glitch text trigger if it has the text-break class inside
+                const glitchText = el.querySelector('.text-break');
+                if(glitchText) glitchText.classList.add('glitch-active');
+            });
+
+            el.addEventListener('mouseleave', (e) => {
+                const glitchText = el.querySelector('.text-break');
+                if(glitchText) glitchText.classList.remove('glitch-active');
+            });
+        });
+
+        // 3. IMPROVED AUDIO ENGINE (Car Revving + Breakcore)
         let audioCtx;
         let oscillator, subOsc, gainNode, distortionNode, filterNode;
+        let lfo, lfoGain; // For Tape Wow/Flutter
         let isAudioStarted = false;
         let targetRPM = 0;
         let currentRPM = 0;
@@ -431,15 +622,9 @@
         }
 
         async function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-
-            if (audioCtx.state === 'suspended') {
-                await audioCtx.resume();
-            }
-
-            if (isAudioStarted) return; // Prevent double node creation
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') await audioCtx.resume();
+            if (isAudioStarted) return;
 
             oscillator = audioCtx.createOscillator();
             subOsc = audioCtx.createOscillator();
@@ -447,10 +632,8 @@
             distortionNode = audioCtx.createWaveShaper();
             filterNode = audioCtx.createBiquadFilter();
 
-            // Like an idling engine
             oscillator.type = 'sawtooth';
             oscillator.frequency.setValueAtTime(50, audioCtx.currentTime); 
-            
             subOsc.type = 'square';
             subOsc.frequency.setValueAtTime(25, audioCtx.currentTime);
 
@@ -463,6 +646,17 @@
             gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
             gainNode.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.5);
 
+            // Tape Wow/Flutter LFO
+            lfo = audioCtx.createOscillator();
+            lfoGain = audioCtx.createGain();
+            lfo.type = 'sine';
+            lfo.frequency.setValueAtTime(0.5, audioCtx.currentTime); // Slow wobble
+            lfoGain.gain.setValueAtTime(1.5, audioCtx.currentTime); // Depth of pitch bend
+            
+            lfo.connect(lfoGain);
+            lfoGain.connect(oscillator.frequency);
+            lfoGain.connect(subOsc.frequency);
+
             oscillator.connect(distortionNode);
             subOsc.connect(distortionNode);
             distortionNode.connect(filterNode);
@@ -471,29 +665,30 @@
 
             oscillator.start();
             subOsc.start();
+            lfo.start();
             
             isAudioStarted = true;
-            animateVisualizer();
+            animateUI();
+            triggerSubliminal(); // Start subliminal loop
+            logToTerminal("AUDIO ENGINE INITIALIZED");
         }
 
-        // BOOT SCREEN LOGIC
+        // BOOT SCREEN
         document.getElementById('boot-btn').addEventListener('click', async () => {
             await initAudio();
             const bootScreen = document.getElementById('boot-screen');
             bootScreen.style.opacity = '0';
             document.getElementById('audio-status').innerText = 'LIVE';
             document.getElementById('audio-status').className = 'text-green-500 animate-pulse';
-            setTimeout(() => {
-                bootScreen.style.display = 'none';
-            }, 500);
+            setTimeout(() => { bootScreen.style.display = 'none'; }, 500);
+            logToTerminal("NAVI_OS BOOT COMPLETE.");
+            logToTerminal("AWAITING COMMAND...");
         });
 
-        // PROPER AUDIO TOGGLE LOGIC
+        // AUDIO TOGGLE
         document.getElementById('audio-toggle').addEventListener('click', async () => {
             if (!audioCtx) return;
-            
             const statusSpan = document.getElementById('audio-status');
-            
             if (audioCtx.state === 'running') {
                 await audioCtx.suspend();
                 statusSpan.innerText = 'MUTED';
@@ -505,66 +700,163 @@
             }
         });
 
-        // 2. REDLINE / ACCELERATION INTERACTION (Hovering acts like hitting the gas)
+        // 4. DYNAMIC REDLINE/ACCELERATION (Hover over title or specific tracks)
         const heroTitle = document.getElementById('hero-title');
         
-        heroTitle.addEventListener('mouseenter', () => {
-            targetRPM = 100; // Redline
+        function revEngine(rpmLevel, freqMult, distCurve, filterOpen) {
+            targetRPM = rpmLevel;
             if (!isAudioStarted || audioCtx.state !== 'running') return;
-            
             const now = audioCtx.currentTime;
-            // Car accelerating / Pitch bending up like a rotary engine
-            oscillator.frequency.exponentialRampToValueAtTime(200, now + 1.5); 
-            subOsc.frequency.exponentialRampToValueAtTime(100, now + 1.5);
-            // Open the filter and crunch it
-            distortionNode.curve = makeDistortionCurve(800); 
-            filterNode.frequency.exponentialRampToValueAtTime(8000, now + 0.5); 
-        });
+            oscillator.frequency.exponentialRampToValueAtTime(50 * freqMult, now + 1.5); 
+            subOsc.frequency.exponentialRampToValueAtTime(25 * freqMult, now + 1.5);
+            distortionNode.curve = makeDistortionCurve(distCurve); 
+            filterNode.frequency.exponentialRampToValueAtTime(filterOpen, now + 0.5); 
+        }
 
-        heroTitle.addEventListener('mouseleave', () => {
-            targetRPM = 15; // Idle
+        function idleEngine() {
+            targetRPM = 15;
             if (!isAudioStarted || audioCtx.state !== 'running') return;
-            
             const now = audioCtx.currentTime;
-            // Engine braking / slowing down
             oscillator.frequency.exponentialRampToValueAtTime(50, now + 1);
             subOsc.frequency.exponentialRampToValueAtTime(25, now + 1);
             distortionNode.curve = makeDistortionCurve(50);
             filterNode.frequency.exponentialRampToValueAtTime(400, now + 1);
-        });
-
-        // 3. TACHOMETER SYNC
-        function animateVisualizer() {
-            if (!isAudioStarted) return;
-            
-            // Smoothly interpolate RPM
-            currentRPM += (targetRPM - currentRPM) * 0.1;
-            
-            // Add a little idle fluctuation
-            let displayRPM = currentRPM;
-            if (targetRPM === 0 || targetRPM === 15) {
-                displayRPM = 15 + (Math.random() * 5); // Idle bouncing
-            } else if (currentRPM > 80) {
-                displayRPM = currentRPM + (Math.random() * 10 - 5); // Redline bouncing
-            }
-
-            const rpmBar = document.getElementById('rpm-bar');
-            rpmBar.style.width = `${Math.min(100, displayRPM)}%`;
-
-            // Change color if redlining
-            if (displayRPM > 80) {
-                rpmBar.style.backgroundColor = 'var(--red-orange)';
-            } else {
-                rpmBar.style.backgroundColor = 'var(--white)';
-            }
-
-            setTimeout(animateVisualizer, 50);
         }
 
-        // Initialize target RPM so it idles immediately
-        targetRPM = 15;
+        heroTitle.addEventListener('mouseenter', () => revEngine(100, 4, 800, 8000));
+        heroTitle.addEventListener('mouseleave', idleEngine);
 
-        // 4. MOUSE PARALLAX (Subtle visual distortion aesthetic)
+        // Bind tracks to dynamic RPMs and 3D Tilt Effect
+        document.querySelectorAll('.retro-os-panel').forEach(card => {
+            // Track specific logic
+            if (card.classList.contains('track-card')) {
+                card.addEventListener('mouseenter', () => {
+                    const trpm = parseInt(card.dataset.rpm);
+                    const freqMult = trpm / 20; // Scale pitch based on RPM data
+                    revEngine(trpm, freqMult, 300, 2000 + (trpm * 20));
+                });
+                card.addEventListener('mouseleave', idleEngine);
+            }
+
+            // 3D Hover Effect
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = ((y - centerY) / centerY) * -5; // Max 5 deg tilt
+                const rotateY = ((x - centerX) / centerX) * 5;
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+            });
+        });
+
+        // 5. GLOBAL ANIMATION LOOP (Tachometer & Sync Rate)
+        targetRPM = 15;
+        const syncSpan = document.getElementById('sync-rate');
+        let currentSync = 85.4;
+        let beatTimer = 0; // For breakcore stutter effect
+
+        function animateUI() {
+            if (!isAudioStarted) return;
+            
+            // TACHOMETER
+            currentRPM += (targetRPM - currentRPM) * 0.1;
+            let displayRPM = currentRPM;
+            if (targetRPM === 0 || targetRPM === 15) {
+                displayRPM = 15 + (Math.random() * 5);
+            } else if (currentRPM > 80) {
+                displayRPM = currentRPM + (Math.random() * 10 - 5);
+            }
+            const rpmBar = document.getElementById('rpm-bar');
+            rpmBar.style.width = `${Math.min(100, displayRPM)}%`;
+            rpmBar.style.backgroundColor = displayRPM > 80 ? 'var(--red-orange)' : 'var(--white)';
+
+            // BREAKCORE STUTTER EFFECT (When Redlining)
+            if (displayRPM > 80 && audioCtx.state === 'running') {
+                beatTimer++;
+                // Trigger a fast rhythmic filter opening to simulate a kick/snare stutter
+                if (beatTimer % 4 === 0) {
+                    filterNode.frequency.setValueAtTime(8000, audioCtx.currentTime);
+                    filterNode.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.05);
+                }
+            }
+
+            // SYNC RATE (Signalis / NieR feature)
+            if (Math.random() > 0.95) {
+                // If redlining, sync rate drops (destabilization)
+                if (displayRPM > 80) {
+                    currentSync -= Math.random() * 2;
+                } else {
+                    // Slowly recover
+                    currentSync += Math.random();
+                }
+                currentSync = Math.max(0, Math.min(100, currentSync));
+                syncSpan.innerText = currentSync.toFixed(1);
+                
+                if(currentSync < 50 && Math.random() > 0.8) {
+                    logToTerminal("WARNING: GESTALT SYNC CRITICAL");
+                }
+            }
+
+            // TRIGGER VISUAL GLITCH IF SYNC IS LOW
+            const bodyEl = document.body;
+            if (currentSync < 50) {
+                if (!bodyEl.classList.contains('global-glitch')) {
+                    bodyEl.classList.add('global-glitch');
+                    logToTerminal("INITIATING EMERGENCY PROTOCOLS...");
+                }
+            } else {
+                bodyEl.classList.remove('global-glitch');
+            }
+
+            setTimeout(animateUI, 50);
+        }
+
+        // 6. SUBLIMINAL FLASH ENGINE & CORE DUMP EASTER EGG
+        const subliminalWords = ["WAKE UP", "FLESH", "REPLIKA", "SIGNAL LOST", "OBEY", "OVERWRITE"];
+        
+        function triggerSubliminal() {
+            if (!isAudioStarted) return;
+            
+            // 0.2% chance per frame to flash a message, increased if sync is low
+            const chance = currentSync < 50 ? 0.95 : 0.998;
+            
+            if (Math.random() > chance) {
+                const subEl = document.getElementById('subliminal');
+                subEl.innerText = subliminalWords[Math.floor(Math.random() * subliminalWords.length)];
+                
+                // Reset animation
+                subEl.classList.remove('flash-anim');
+                void subEl.offsetWidth; 
+                subEl.classList.add('flash-anim');
+                
+                playUIBeep(200, 'sawtooth'); // Harsh digital screech
+                if(Math.random() > 0.5) logToTerminal("??? INTERCEPTED SIGNAL ???");
+            }
+            requestAnimationFrame(triggerSubliminal);
+        }
+
+        document.getElementById('core-dump-trigger').addEventListener('click', () => {
+            currentSync -= 40; // Instantly tank the sync rate
+            playUIBeep(800, 'square');
+            logToTerminal("CRITICAL: MANUAL CORE DUMP INITIATED");
+            
+            // Spam terminal
+            let spamCount = 0;
+            const spamInterval = setInterval(() => {
+                const memAddr = "0x" + Math.floor(Math.random()*16777215).toString(16).toUpperCase();
+                logToTerminal(`ERR: NULL POINTER AT ${memAddr}`);
+                spamCount++;
+                if(spamCount > 10) clearInterval(spamInterval);
+            }, 100);
+        });
+
+        // 7. MOUSE PARALLAX (Subtle visual distortion aesthetic)
         document.addEventListener('mousemove', (e) => {
             const x = (e.clientX / window.innerWidth - 0.5) * 20;
             const y = (e.clientY / window.innerHeight - 0.5) * 20;
