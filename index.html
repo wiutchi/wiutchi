@@ -1,23 +1,253 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<style>
-  body { background: #333; overflow: hidden; display: flex; align-items: center; height: 100vh; }
-  .road { position: absolute; width: 100%; height: 10px; background: white; top: 60%; }
-  .car {
-    font-size: 50px;
-    position: absolute;
-    bottom: 40%;
-    animation: drive 5s linear infinite;
-  }
-  @keyframes drive {
-    from { left: -100px; }
-    to { left: 100%; }
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WIUTCHI | Official Site</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --accent: #FF4500; /* Reddish Orange */
+            --black: #0a0a0a;
+            --white: #ffffff;
+            --gray: #1a1a1a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--black);
+            color: var(--white);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem 10%;
+            position: fixed;
+            width: 100%;
+            z-index: 1000;
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: 5px;
+            color: var(--white);
+            text-decoration: none;
+            text-transform: uppercase;
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-links li {
+            margin-left: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1514525253344-f25091a92a7e?auto=format&fit=crop&q=80&w=1920'); /* Placeholder image */
+            background-size: cover;
+            background-position: center;
+        }
+
+        .hero h1 {
+            font-size: 6rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            letter-spacing: -2px;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 2rem;
+            color: var(--accent);
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            background: var(--accent);
+            color: var(--white);
+            text-decoration: none;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: 0.3s;
+            border: 2px solid var(--accent);
+        }
+
+        .btn:hover {
+            background: transparent;
+            color: var(--accent);
+        }
+
+        /* Music Section */
+        .section {
+            padding: 100px 10%;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            text-transform: uppercase;
+            border-left: 5px solid var(--accent);
+            padding-left: 20px;
+        }
+
+        .music-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .track-card {
+            background: var(--gray);
+            padding: 20px;
+            border-radius: 4px;
+            transition: 0.3s;
+            border-bottom: 0px solid var(--accent);
+        }
+
+        .track-card:hover {
+            transform: translateY(-10px);
+            border-bottom: 4px solid var(--accent);
+        }
+
+        .track-img {
+            width: 100%;
+            aspect-ratio: 1;
+            background: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Footer */
+        footer {
+            padding: 50px 10%;
+            text-align: center;
+            background: var(--black);
+            border-top: 1px solid #222;
+        }
+
+        .social-links {
+            margin-bottom: 20px;
+        }
+
+        .social-links a {
+            color: var(--white);
+            font-size: 1.5rem;
+            margin: 0 15px;
+            transition: 0.3s;
+        }
+
+        .social-links a:hover {
+            color: var(--accent);
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 3.5rem; }
+            .nav-links { display: none; }
+        }
+    </style>
 </head>
 <body>
-  <div class="road"></div>
-  <div class="car">🏎️</div>
+
+    <nav>
+        <a href="#" class="logo">WIUT<span>CHI</span></a>
+        <ul class="nav-links">
+            <li><a href="#music">Music</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+    </nav>
+
+    <section class="hero">
+        <p>New Sound Emerging</p>
+        <h1>WIUTCHI</h1>
+        <a href="#music" class="btn">Stream Now</a>
+    </section>
+
+    <section id="music" class="section">
+        <h2 class="section-title">Latest Releases</h2>
+        <div class="music-grid">
+            <div class="track-card">
+                <div class="track-img"><i class="fas fa-compact-disc fa-4x" style="color: var(--accent)"></i></div>
+                <h3>Track Name One</h3>
+                <p style="color: #888;">Single • 2026</p>
+            </div>
+            <div class="track-card">
+                <div class="track-img"><i class="fas fa-compact-disc fa-4x" style="color: var(--accent)"></i></div>
+                <h3>Track Name Two</h3>
+                <p style="color: #888;">EP • 2026</p>
+            </div>
+            <div class="track-card">
+                <div class="track-img"><i class="fas fa-compact-disc fa-4x" style="color: var(--accent)"></i></div>
+                <h3>Track Name Three</h3>
+                <p style="color: #888;">Single • 2025</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="section" style="background-color: var(--gray);">
+        <h2 class="section-title">The Vision</h2>
+        <p style="max-width: 800px; font-size: 1.2rem; color: #ccc;">
+            Wiutchi is a multi-dimensional producer and artist pushing the boundaries of electronic and melodic soundscapes. 
+            By blending raw industrial energy with orange-hued warmth, Wiutchi creates an immersive auditory experience 
+            that defines the new era of underground music.
+        </p>
+    </section>
+
+    <footer>
+        <div class="social-links">
+            <a href="#"><i class="fab fa-spotify"></i></a>
+            <a href="#"><i class="fab fa-soundcloud"></i></a>
+            <a href="#"><i class="fab fa-instagram"></i></a>
+            <a href="#"><i class="fab fa-youtube"></i></a>
+        </div>
+        <p>&copy; 2026 WIUTCHI. Designed for the Future.</p>
+    </footer>
+
 </body>
 </html>
