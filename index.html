@@ -246,6 +246,38 @@
             justify-content: space-between;
         }
 
+        /* Draggable Window Base Classes */
+        .draggable-window {
+            position: fixed;
+            user-select: none;
+            z-index: 40;
+        }
+        .drag-handle {
+            cursor: move;
+        }
+        .minimized .window-body {
+            display: none !important;
+        }
+
+        /* Kernel Panic Screen */
+        #kernel-panic {
+            position: fixed;
+            inset: 0;
+            background-color: #aa0000;
+            color: white;
+            font-family: 'Space Mono', monospace;
+            z-index: 9999999;
+            display: none;
+            flex-direction: column;
+            padding: 4rem;
+            cursor: default;
+        }
+        .panic-text {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            text-shadow: none;
+        }
+
         /* Boot Screen */
         #boot-screen {
             position: fixed;
@@ -387,21 +419,30 @@
     <!-- Authentic CRT Glass Overlay -->
     <div class="crt-overlay"></div>
 
+    <!-- FATAL CRASH SCREEN -->
+    <div id="kernel-panic">
+        <h1 class="text-6xl font-black mb-8 bg-white text-[#aa0000] inline-block px-4 py-2">FATAL_ERROR</h1>
+        <p class="panic-text">STOP: 0x0000000A (IRQL_NOT_LESS_OR_EQUAL)</p>
+        <p class="panic-text">GESTALT_CONSCIOUSNESS_DISSOCIATED.</p>
+        <p class="panic-text mt-8">The digital vessel has exceeded operating parameters. Sync rate dropped below critical threshold. Connection to the Wired severed.</p>
+        <p class="panic-text mt-4">Dumping physical memory to disk: <span id="panic-counter">0</span>%</p>
+        <button id="reboot-btn" class="mt-12 border-2 border-white px-8 py-4 w-max hover:bg-white hover:text-[#aa0000] font-bold text-xl uppercase transition-colors hidden cursor-crosshair">Initialize Reboot Sequence</button>
+    </div>
+
     <!-- Draggable Live Terminal / Interactive CLI -->
-    <div id="terminal-container" class="fixed bottom-4 left-4 z-40 text-[10px] text-[#FF3D00] font-bold tracking-widest uppercase flex flex-col w-80 pointer-events-auto opacity-90 bg-black/80 border border-[#FF3D00]/50 backdrop-blur-sm shadow-[4px_4px_0_rgba(255,61,0,0.3)]" style="top: auto; left: 16px; bottom: 16px;">
+    <div id="terminal-container" class="draggable-window text-[10px] text-[#FF3D00] font-bold tracking-widest uppercase flex flex-col w-80 pointer-events-auto opacity-90 bg-black/80 border border-[#FF3D00]/50 backdrop-blur-sm shadow-[4px_4px_0_rgba(255,61,0,0.3)]" style="left: 16px; bottom: 16px;">
         
         <!-- Terminal Header (Drag Handle) -->
-        <div id="terminal-drag-handle" class="bg-[#FF3D00] text-black px-2 py-1 flex justify-between items-center interactive-element" data-log="DRAGGING WINDOW...">
+        <div class="drag-handle bg-[#FF3D00] text-black px-2 py-1 flex justify-between items-center interactive-element" data-log="DRAGGING TERMINAL WINDOW...">
             <span>WIUTCHI.OS // TERM</span>
             <div class="flex gap-2">
-                <button id="term-min" class="hover:text-white transition-colors">_</button>
-                <button id="term-max" class="hover:text-white transition-colors">□</button>
-                <button id="term-close" class="hover:text-white transition-colors">X</button>
+                <button class="win-min hover:text-white transition-colors">_</button>
+                <button class="win-close hover:text-white transition-colors">X</button>
             </div>
         </div>
 
         <!-- Terminal Body -->
-        <div id="terminal-body" class="p-3 flex flex-col h-48">
+        <div class="window-body p-3 flex flex-col h-48">
             <!-- Live Audio Oscilloscope -->
             <canvas id="oscilloscope" width="300" height="40" class="mb-2 border border-[#FF3D00]/20 w-full opacity-80 bg-black rounded-sm shrink-0"></canvas>
             
@@ -411,6 +452,24 @@
             <div class="flex items-center gap-2 border-t border-[#FF3D00]/30 pt-2 mt-auto shrink-0">
                 <span class="animate-pulse">></span>
                 <input id="cmd-input" type="text" class="bg-transparent border-none outline-none text-white w-full placeholder:text-[#FF3D00]/40 font-black" placeholder="AWAITING COMMAND..." autocomplete="off">
+            </div>
+        </div>
+    </div>
+
+    <!-- Draggable Radar / Anomaly Scanner -->
+    <div id="radar-container" class="draggable-window text-[10px] text-[#FF3D00] font-bold tracking-widest uppercase flex flex-col w-64 pointer-events-auto opacity-90 bg-black/80 border border-[#FF3D00]/50 backdrop-blur-sm shadow-[4px_4px_0_rgba(255,61,0,0.3)]" style="right: 16px; top: 80px;">
+        <div class="drag-handle bg-[#FF3D00] text-black px-2 py-1 flex justify-between items-center interactive-element" data-log="ACCESSING RADAR SYSTEMS...">
+            <span>LKP-93 // RADAR</span>
+            <div class="flex gap-2">
+                <button class="win-min hover:text-white transition-colors">_</button>
+                <button class="win-close hover:text-white transition-colors">X</button>
+            </div>
+        </div>
+        <div class="window-body p-3 flex flex-col items-center">
+            <canvas id="radar-canvas" width="200" height="200" class="border border-[#FF3D00]/30 rounded-full bg-black/50"></canvas>
+            <div class="mt-2 text-[8px] opacity-70 w-full flex justify-between">
+                <span>SWEEP: ACTIVE</span>
+                <span>ANOMALIES: <span id="anomaly-count">0</span></span>
             </div>
         </div>
     </div>
@@ -669,46 +728,57 @@
     </div> <!-- End main-wrapper -->
 
     <script>
-        // 1. DRAGGABLE TERMINAL LOGIC
-        const terminal = document.getElementById('terminal-container');
-        const dragHandle = document.getElementById('terminal-drag-handle');
-        let isDragging = false;
-        let startX, startY, initialLeft, initialTop;
+        // 1. GENERIC DRAGGABLE WINDOW LOGIC
+        let zIndexCounter = 50;
 
-        dragHandle.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            
-            // Convert to absolute positioning if it was bottom/left locked
-            const rect = terminal.getBoundingClientRect();
-            terminal.style.bottom = 'auto';
-            terminal.style.right = 'auto';
-            terminal.style.left = rect.left + 'px';
-            terminal.style.top = rect.top + 'px';
-            
-            initialLeft = rect.left;
-            initialTop = rect.top;
-            
-            document.body.style.userSelect = 'none'; // Prevent text selection while dragging
+        document.querySelectorAll('.draggable-window').forEach(windowEl => {
+            const dragHandle = windowEl.querySelector('.drag-handle');
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+
+            // Bring to front on click
+            windowEl.addEventListener('mousedown', () => {
+                zIndexCounter++;
+                windowEl.style.zIndex = zIndexCounter;
+            });
+
+            dragHandle.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                
+                // Convert to absolute positioning if bounded to right/bottom initially
+                const rect = windowEl.getBoundingClientRect();
+                windowEl.style.bottom = 'auto';
+                windowEl.style.right = 'auto';
+                windowEl.style.left = rect.left + 'px';
+                windowEl.style.top = rect.top + 'px';
+                
+                initialLeft = rect.left;
+                initialTop = rect.top;
+                
+                document.body.style.userSelect = 'none';
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                windowEl.style.left = (initialLeft + dx) + 'px';
+                windowEl.style.top = (initialTop + dy) + 'px';
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                document.body.style.userSelect = '';
+            });
+
+            // Window Controls
+            const btnMin = windowEl.querySelector('.win-min');
+            const btnClose = windowEl.querySelector('.win-close');
+            if(btnMin) btnMin.addEventListener('click', () => windowEl.classList.toggle('minimized'));
+            if(btnClose) btnClose.addEventListener('click', () => windowEl.style.display = 'none');
         });
-
-        document.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-            terminal.style.left = (initialLeft + dx) + 'px';
-            terminal.style.top = (initialTop + dy) + 'px';
-        });
-
-        document.addEventListener('mouseup', () => {
-            isDragging = false;
-            document.body.style.userSelect = '';
-        });
-
-        // Terminal Window Controls
-        document.getElementById('term-min').addEventListener('click', () => terminal.classList.toggle('minimized'));
-        document.getElementById('term-close').addEventListener('click', () => terminal.style.display = 'none');
 
 
         // 2. TERMINAL LOG SYSTEM
@@ -741,7 +811,7 @@
                 
                 switch(val) {
                     case 'HELP':
-                        logToTerminal("CMDS: REBOOT, STATUS, WAKE, DRIVE, STOP, CLEAR");
+                        logToTerminal("CMDS: REBOOT, STATUS, WAKE, DRIVE, STOP, RADAR");
                         break;
                     case 'REBOOT':
                         currentSync = 100;
@@ -756,6 +826,10 @@
                         break;
                     case 'STATUS':
                         logToTerminal(`SYNC: ${currentSync.toFixed(1)}% | RPM: ${currentRPM.toFixed(0)}`);
+                        break;
+                    case 'RADAR':
+                        document.getElementById('radar-container').style.display = 'flex';
+                        logToTerminal("RADAR SYSTEMS ONLINE.");
                         break;
                     case 'DIR':
                         logToTerminal("NO FILES FOUND. ONLY ROT.");
@@ -835,15 +909,18 @@
             });
         });
 
-        // 4. IMPROVED AUDIO ENGINE (Car Revving + Breakcore Gate + Bitcrusher)
+        // 4. IMPROVED AUDIO ENGINE (Car Revving + PROCEDURAL BREAKCORE DRUMS)
         let audioCtx;
         let oscillator, subOsc, masterGainNode, gainNode, distortionNode, filterNode;
         let lfo, lfoGain; // For Tape Wow/Flutter
         let bitcrusherNode; // For Sync Degradation
         let analyserNode; // For Real-time Oscilloscope
+        let noiseBuffer; // For Snare/Hat synthesis
+        
         let isAudioStarted = false;
         let targetRPM = 0;
         let currentRPM = 0;
+        let isCrashed = false;
 
         function makeDistortionCurve(amount) {
             const n_samples = 44100;
@@ -867,10 +944,22 @@
             return curve;
         }
 
+        // Generate white noise buffer for drum synthesis
+        function initNoiseBuffer() {
+            const bufferSize = audioCtx.sampleRate * 2; // 2 seconds
+            noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+        }
+
         async function initAudio() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') await audioCtx.resume();
             if (isAudioStarted) return;
+
+            initNoiseBuffer();
 
             oscillator = audioCtx.createOscillator();
             subOsc = audioCtx.createOscillator();
@@ -913,7 +1002,10 @@
 
             oscillator.connect(distortionNode);
             subOsc.connect(distortionNode);
+            
+            // All audio (drone + drums) routes through bitcrusher for Gestalt decay
             distortionNode.connect(bitcrusherNode); 
+            
             bitcrusherNode.connect(filterNode);
             filterNode.connect(gainNode);
             gainNode.connect(masterGainNode); // Add breakcore master gate
@@ -926,10 +1018,122 @@
             
             isAudioStarted = true;
             animateUI();
+            scheduleDrums(); // Start the procedural drum machine
             triggerSubliminal(false); 
-            drawOscilloscope(); // Start oscilloscope loop
+            drawOscilloscope(); 
             logToTerminal("AUDIO ENGINE INITIALIZED");
             logToTerminal("TYPE 'HELP' FOR CMDS");
+        }
+
+        // DRUM SYNTHESIS FUNCTIONS
+        function playKick(time) {
+            if(isCrashed) return;
+            const kickOsc = audioCtx.createOscillator();
+            const kickGain = audioCtx.createGain();
+            kickOsc.connect(kickGain);
+            kickGain.connect(bitcrusherNode); // Route to global effects
+            
+            kickOsc.frequency.setValueAtTime(150, time);
+            kickOsc.frequency.exponentialRampToValueAtTime(0.01, time + 0.5);
+            
+            kickGain.gain.setValueAtTime(1, time);
+            kickGain.gain.exponentialRampToValueAtTime(0.01, time + 0.5);
+            
+            kickOsc.start(time);
+            kickOsc.stop(time + 0.5);
+        }
+
+        function playSnare(time) {
+            if(isCrashed) return;
+            const noiseSrc = audioCtx.createBufferSource();
+            noiseSrc.buffer = noiseBuffer;
+            const noiseFilter = audioCtx.createBiquadFilter();
+            const noiseGain = audioCtx.createGain();
+            
+            noiseFilter.type = 'highpass';
+            noiseFilter.frequency.value = 1000;
+            
+            noiseGain.gain.setValueAtTime(1, time);
+            noiseGain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
+            
+            noiseSrc.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(bitcrusherNode);
+            
+            noiseSrc.start(time);
+            noiseSrc.stop(time + 0.2);
+            
+            // Add a punchy body to the snare
+            const osc = audioCtx.createOscillator();
+            const oscGain = audioCtx.createGain();
+            osc.frequency.setValueAtTime(250, time);
+            oscGain.gain.setValueAtTime(0.5, time);
+            oscGain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+            osc.connect(oscGain);
+            oscGain.connect(bitcrusherNode);
+            osc.start(time);
+            osc.stop(time + 0.1);
+        }
+
+        function playHiHat(time) {
+            if(isCrashed) return;
+            const noiseSrc = audioCtx.createBufferSource();
+            noiseSrc.buffer = noiseBuffer;
+            const noiseFilter = audioCtx.createBiquadFilter();
+            const noiseGain = audioCtx.createGain();
+            
+            noiseFilter.type = 'highpass';
+            noiseFilter.frequency.value = 7000;
+            
+            noiseGain.gain.setValueAtTime(0.3, time);
+            noiseGain.gain.exponentialRampToValueAtTime(0.01, time + 0.05); // Very short
+            
+            noiseSrc.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(bitcrusherNode);
+            
+            noiseSrc.start(time);
+            noiseSrc.stop(time + 0.05);
+        }
+
+        // PROCEDURAL BREAKCORE SEQUENCER
+        let nextNoteTime = 0.0;
+        let currentStep = 0;
+        const lookahead = 25.0; // ms
+        const scheduleAheadTime = 0.1; // s
+
+        function nextNote() {
+            const secondsPerBeat = 60.0 / (currentRPM < 80 ? 140 : 220); // Switch to 220 BPM on redline
+            nextNoteTime += 0.25 * secondsPerBeat; // 16th notes
+            currentStep++;
+            if (currentStep === 16) currentStep = 0;
+        }
+
+        function scheduleDrums() {
+            if(isCrashed) return;
+            
+            while (nextNoteTime < audioCtx.currentTime + scheduleAheadTime) {
+                // Only play drums when the engine is revved up (RPM > 80)
+                if (currentRPM > 80) {
+                    // Generative Breakcore Patterns based on Sync Rate
+                    const chaos = currentSync < 50 ? 0.8 : 0.2; // More random if sync is low
+
+                    // Kicks on 0, 8, and randomly
+                    if (currentStep === 0 || currentStep === 8 || (Math.random() < 0.1 + chaos)) {
+                        playKick(nextNoteTime);
+                    }
+                    // Snares on 4, 12, and randomly (Amen break style ghosts)
+                    if (currentStep === 4 || currentStep === 12 || (Math.random() < 0.15 + chaos)) {
+                        playSnare(nextNoteTime);
+                    }
+                    // Hats almost always
+                    if (Math.random() > 0.2) {
+                        playHiHat(nextNoteTime);
+                    }
+                }
+                nextNote();
+            }
+            setTimeout(scheduleDrums, lookahead);
         }
 
         // BIOS BOOT SEQUENCE SIMULATION
@@ -1094,7 +1298,7 @@
         const oscCtx = oscCanvas.getContext('2d');
         
         function drawOscilloscope() {
-            if (!isAudioStarted) return;
+            if (!isAudioStarted || isCrashed) return;
             requestAnimationFrame(drawOscilloscope);
             
             const bufferLength = analyserNode.frequencyBinCount;
@@ -1129,9 +1333,102 @@
             oscCtx.stroke();
         }
 
-        function animateUI() {
-            if (!isAudioStarted) return;
+        // RADAR ANOMALY RENDERER
+        const radarCanvas = document.getElementById('radar-canvas');
+        const rCtx = radarCanvas.getContext('2d');
+        let radarAngle = 0;
+        let anomalies = [];
+
+        function drawRadar() {
+            if(isCrashed) return;
+            const cx = radarCanvas.width / 2;
+            const cy = radarCanvas.height / 2;
+            const radius = radarCanvas.width / 2 - 2;
+
+            // Fade background
+            rCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            rCtx.fillRect(0, 0, radarCanvas.width, radarCanvas.height);
+
+            // Draw grid
+            rCtx.strokeStyle = 'rgba(255, 61, 0, 0.2)';
+            rCtx.lineWidth = 1;
+            rCtx.beginPath();
+            rCtx.arc(cx, cy, radius, 0, Math.PI * 2);
+            rCtx.arc(cx, cy, radius * 0.66, 0, Math.PI * 2);
+            rCtx.arc(cx, cy, radius * 0.33, 0, Math.PI * 2);
+            rCtx.moveTo(cx, 0); rCtx.lineTo(cx, radarCanvas.height);
+            rCtx.moveTo(0, cy); rCtx.lineTo(radarCanvas.width, cy);
+            rCtx.stroke();
+
+            // Sweeper
+            radarAngle += 0.05;
+            const sweepX = cx + Math.cos(radarAngle) * radius;
+            const sweepY = cy + Math.sin(radarAngle) * radius;
+            rCtx.strokeStyle = 'rgba(255, 61, 0, 0.8)';
+            rCtx.lineWidth = 2;
+            rCtx.beginPath();
+            rCtx.moveTo(cx, cy);
+            rCtx.lineTo(sweepX, sweepY);
+            rCtx.stroke();
+
+            // Manage Anomalies (More spawn if Sync is low)
+            if (currentSync < 60 && Math.random() > (currentSync / 100)) {
+                anomalies.push({
+                    x: cx + (Math.random() * 2 - 1) * radius,
+                    y: cy + (Math.random() * 2 - 1) * radius,
+                    life: 1.0
+                });
+            }
+
+            // Draw Anomalies
+            document.getElementById('anomaly-count').innerText = anomalies.length;
+            for (let i = anomalies.length - 1; i >= 0; i--) {
+                const a = anomalies[i];
+                rCtx.fillStyle = `rgba(255, 0, 0, ${a.life})`;
+                rCtx.beginPath();
+                rCtx.arc(a.x, a.y, 3, 0, Math.PI * 2);
+                rCtx.fill();
+                a.life -= 0.02; // Fade out
+                if (a.life <= 0) anomalies.splice(i, 1);
+            }
+        }
+
+        // TRIGGER KERNEL PANIC
+        function triggerKernelPanic() {
+            if (isCrashed) return;
+            isCrashed = true;
+            document.getElementById('main-wrapper').style.display = 'none';
+            document.getElementById('kernel-panic').style.display = 'flex';
+            document.body.className = ''; // Remove glitches/styles
             
+            if (audioCtx && audioCtx.state === 'running') {
+                audioCtx.suspend(); // Kill audio
+            }
+
+            // Memory dump animation
+            let dumpCounter = 0;
+            const dumpEl = document.getElementById('panic-counter');
+            const dumpInterval = setInterval(() => {
+                dumpCounter += Math.floor(Math.random() * 10);
+                if (dumpCounter >= 100) {
+                    dumpCounter = 100;
+                    clearInterval(dumpInterval);
+                    document.getElementById('reboot-btn').style.display = 'block';
+                }
+                dumpEl.innerText = dumpCounter;
+            }, 200);
+        }
+
+        document.getElementById('reboot-btn').addEventListener('click', () => {
+            location.reload(); // Actually refresh the page
+        });
+
+
+        function animateUI() {
+            if (!isAudioStarted || isCrashed) return;
+            
+            drawRadar(); // Update radar window
+
             // TACHOMETER
             currentRPM += (targetRPM - currentRPM) * 0.1;
             let displayRPM = currentRPM;
@@ -1180,6 +1477,12 @@
                 if(currentSync < 50 && Math.random() > 0.8) {
                     logToTerminal("WARNING: GESTALT SYNC CRITICAL");
                 }
+                
+                // FATAL CRASH CHECK
+                if (currentSync <= 0) {
+                    triggerKernelPanic();
+                    return; // Stop animation loop
+                }
             }
 
             // TRIGGER VISUAL GLITCH IF SYNC IS LOW
@@ -1209,7 +1512,7 @@
         const subliminalWords = ["WAKE UP", "FLESH", "REPLIKA", "SIGNAL LOST", "OBEY", "OVERWRITE"];
         
         function triggerSubliminal(force = false) {
-            if (!isAudioStarted && !force) return;
+            if (!isAudioStarted && !force || isCrashed) return;
             
             // 0.2% chance per frame to flash a message, increased if sync is low
             const chance = currentSync < 50 ? 0.95 : 0.998;
@@ -1232,6 +1535,12 @@
 
         document.getElementById('core-dump-trigger').addEventListener('click', () => {
             currentSync -= 40; // Instantly tank the sync rate
+            
+            if (currentSync <= 0) {
+                triggerKernelPanic();
+                return;
+            }
+
             playUIBeep(800, 'square');
             logToTerminal("CRITICAL: MANUAL CORE DUMP INITIATED");
             
