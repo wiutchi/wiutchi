@@ -26,6 +26,18 @@
 
         .heading { font-family: 'Syncopate', sans-serif; letter-spacing: -2px; }
 
+        /* CRT Hardware Turn On Effect */
+        #crt-turn-on {
+            position: fixed; inset: 0; z-index: 99999999;
+            background: #050505; pointer-events: none;
+            animation: crt-power-on 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+        @keyframes crt-power-on {
+            0% { border-top: 50vh solid #050505; border-bottom: 50vh solid #050505; background: var(--white); opacity: 1; }
+            20% { border-top: 1px solid #050505; border-bottom: 1px solid #050505; background: var(--white); opacity: 1; }
+            100% { border-top: 0px solid #050505; border-bottom: 0px solid #050505; background: transparent; opacity: 0; }
+        }
+
         /* CRT Flicker */
         @keyframes flicker {
             0% { opacity: 0.95; }
@@ -317,17 +329,6 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
-        /* Draggable Terminal Classes */
-        #terminal-container {
-            user-select: none;
-        }
-        #terminal-drag-handle {
-            cursor: move;
-        }
-        .minimized #terminal-body {
-            display: none;
-        }
-
         /* Subliminal Message Flashes (Signalis/Lain) */
         #subliminal {
             position: fixed; inset: 0; z-index: 9999999;
@@ -362,6 +363,25 @@
             60% { transform: translate(-1px, 3px) skew(0deg); }
             80% { transform: translate(1px, -3px) skew(1deg); }
             100% { transform: translate(0, 0) skew(0deg); }
+        }
+
+        /* AWAKENED MODE (Secret Payload) */
+        .awakened-mode {
+            filter: invert(1) hue-rotate(180deg);
+            background-color: var(--white);
+        }
+        .awakened-mode .perspective-grid {
+            filter: hue-rotate(180deg) brightness(150%);
+            animation-duration: 0.05s !important;
+        }
+        .awakened-mode .red-eye {
+            opacity: 0.8 !important;
+            filter: blur(10px) hue-rotate(90deg) brightness(200%);
+            transform: translate(-50%, -50%) scale(2);
+        }
+        .awakened-mode #terminal-container, .awakened-mode #radar-container, .awakened-mode #optics-container {
+            box-shadow: 8px 8px 0 rgba(0, 255, 255, 0.5);
+            border-color: #00FFFF;
         }
 
         /* ASCII Art */
@@ -402,12 +422,15 @@
             animation: flicker 0.15s infinite;
         }
         
-        a, button, .cursor-pointer, input {
+        a, button, .cursor-pointer, input, canvas {
             cursor: crosshair !important;
         }
     </style>
 </head>
 <body class="selection:bg-[#FF3D00] selection:text-white relative">
+
+    <!-- Hardware Turn On -->
+    <div id="crt-turn-on"></div>
     
     <!-- Subliminal Layer -->
     <div id="subliminal">WAKE UP</div>
@@ -431,8 +454,6 @@
 
     <!-- Draggable Live Terminal / Interactive CLI -->
     <div id="terminal-container" class="draggable-window text-[10px] text-[#FF3D00] font-bold tracking-widest uppercase flex flex-col w-80 pointer-events-auto opacity-90 bg-black/80 border border-[#FF3D00]/50 backdrop-blur-sm shadow-[4px_4px_0_rgba(255,61,0,0.3)]" style="left: 16px; bottom: 16px;">
-        
-        <!-- Terminal Header (Drag Handle) -->
         <div class="drag-handle bg-[#FF3D00] text-black px-2 py-1 flex justify-between items-center interactive-element" data-log="DRAGGING TERMINAL WINDOW...">
             <span>WIUTCHI.OS // TERM</span>
             <div class="flex gap-2">
@@ -440,15 +461,9 @@
                 <button class="win-close hover:text-white transition-colors">X</button>
             </div>
         </div>
-
-        <!-- Terminal Body -->
         <div class="window-body p-3 flex flex-col h-48">
-            <!-- Live Audio Oscilloscope -->
             <canvas id="oscilloscope" width="300" height="40" class="mb-2 border border-[#FF3D00]/20 w-full opacity-80 bg-black rounded-sm shrink-0"></canvas>
-            
-            <div id="terminal-log" class="flex flex-col justify-end overflow-hidden mb-2 h-full">
-                <!-- JS injects logs here -->
-            </div>
+            <div id="terminal-log" class="flex flex-col justify-end overflow-hidden mb-2 h-full"></div>
             <div class="flex items-center gap-2 border-t border-[#FF3D00]/30 pt-2 mt-auto shrink-0">
                 <span class="animate-pulse">></span>
                 <input id="cmd-input" type="text" class="bg-transparent border-none outline-none text-white w-full placeholder:text-[#FF3D00]/40 font-black" placeholder="AWAITING COMMAND..." autocomplete="off">
@@ -466,10 +481,27 @@
             </div>
         </div>
         <div class="window-body p-3 flex flex-col items-center">
-            <canvas id="radar-canvas" width="200" height="200" class="border border-[#FF3D00]/30 rounded-full bg-black/50"></canvas>
+            <canvas id="radar-canvas" width="200" height="200" class="border border-[#FF3D00]/30 rounded-full bg-black/50 interactive-element" data-log="DEFENSE SYSTEM ACTIVE. CLICK ANOMALIES TO PURGE."></canvas>
             <div class="mt-2 text-[8px] opacity-70 w-full flex justify-between">
                 <span>SWEEP: ACTIVE</span>
                 <span>ANOMALIES: <span id="anomaly-count">0</span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Draggable Optics / Hypercube Render -->
+    <div id="optics-container" class="draggable-window text-[10px] text-[#FF3D00] font-bold tracking-widest uppercase flex flex-col w-48 pointer-events-auto opacity-90 bg-black/80 border border-[#FF3D00]/50 backdrop-blur-sm shadow-[4px_4px_0_rgba(255,61,0,0.3)]" style="left: 16px; top: 80px; display: none;">
+        <div class="drag-handle bg-[#FF3D00] text-black px-2 py-1 flex justify-between items-center interactive-element" data-log="INITIALIZING OPTICS RENDER...">
+            <span>LKP-93 // OPTICS</span>
+            <div class="flex gap-2">
+                <button class="win-min hover:text-white transition-colors">_</button>
+                <button class="win-close hover:text-white transition-colors">X</button>
+            </div>
+        </div>
+        <div class="window-body p-3 flex flex-col items-center">
+            <canvas id="optics-canvas" width="150" height="150" class="border border-[#FF3D00]/30 bg-black/50"></canvas>
+            <div class="mt-2 text-[8px] opacity-70 w-full text-center">
+                <span>GESTALT_CORE_PROJECTION</span>
             </div>
         </div>
     </div>
@@ -747,7 +779,6 @@
                 startX = e.clientX;
                 startY = e.clientY;
                 
-                // Convert to absolute positioning if bounded to right/bottom initially
                 const rect = windowEl.getBoundingClientRect();
                 windowEl.style.bottom = 'auto';
                 windowEl.style.right = 'auto';
@@ -783,7 +814,6 @@
 
         // 2. TERMINAL LOG SYSTEM
         const logContainer = document.getElementById('terminal-log');
-        let logCounter = 0;
 
         function logToTerminal(msg) {
             const el = document.createElement('div');
@@ -791,7 +821,6 @@
             el.innerHTML = `> ${msg}`;
             logContainer.appendChild(el);
             
-            // Keep only the last 6 logs
             if (logContainer.children.length > 6) {
                 logContainer.removeChild(logContainer.firstChild);
             }
@@ -811,7 +840,7 @@
                 
                 switch(val) {
                     case 'HELP':
-                        logToTerminal("CMDS: REBOOT, STATUS, WAKE, DRIVE, STOP, RADAR");
+                        logToTerminal("CMDS: REBOOT, STATUS, WAKE, DRIVE, STOP, RADAR, OPTICS, [REDACTED]");
                         break;
                     case 'REBOOT':
                         currentSync = 100;
@@ -831,6 +860,10 @@
                         document.getElementById('radar-container').style.display = 'flex';
                         logToTerminal("RADAR SYSTEMS ONLINE.");
                         break;
+                    case 'OPTICS':
+                        document.getElementById('optics-container').style.display = 'flex';
+                        logToTerminal("OPTICS: GESTALT CORE VISUALIZED.");
+                        break;
                     case 'DIR':
                         logToTerminal("NO FILES FOUND. ONLY ROT.");
                         break;
@@ -838,6 +871,19 @@
                         logContainer.innerHTML = '';
                         break;
                     // EASTER EGGS / LORE OVERRIDES
+                    case 'EXEC 9942':
+                    case 'EXECUTE 9942':
+                        logToTerminal("AUTHORIZATION ACCEPTED.");
+                        logToTerminal("OVERCLOCKING GESTALT CORE...");
+                        logToTerminal("AWAKENED MODE INITIATED.");
+                        document.body.classList.add('awakened-mode');
+                        document.getElementById('main-wrapper').classList.add('screen-shake');
+                        currentSync = 200;
+                        isDriving = true;
+                        playUIBeep(3000, 'sine');
+                        triggerSubliminal(true);
+                        revEngine(150, 8, 900, 10000); // God-mode speed
+                        break;
                     case 'LAIN':
                         logToTerminal("LET'S ALL LOVE LAIN.");
                         triggerSubliminal(true);
@@ -849,7 +895,7 @@
                         document.getElementById('main-wrapper').classList.add('screen-shake');
                         logToTerminal("DOWNHILL OVERRIDE: ACTIVE. BRAKES DISABLED.");
                         playUIBeep(2000, 'sawtooth');
-                        revEngine(120, 6, 800, 8000); // Lock engine at max
+                        revEngine(120, 6, 800, 8000); 
                         break;
                     case 'STOP':
                         if (!isDriving) return logToTerminal("NOT CURRENTLY DRIVING.");
@@ -870,14 +916,13 @@
             }
         });
 
-        // 3. UI AUDIO BEEP (VA-11 / NieR UI Feel)
+        // 3. UI AUDIO BEEP
         function playUIBeep(freq = 1200, type = 'square') {
             if (!audioCtx || audioCtx.state !== 'running' || !isAudioStarted) return;
             const beepOsc = audioCtx.createOscillator();
             const beepGain = audioCtx.createGain();
             beepOsc.type = type;
             beepOsc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            // Very short, quiet beep
             beepGain.gain.setValueAtTime(0.02, audioCtx.currentTime);
             beepGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
             
@@ -887,35 +932,26 @@
             beepOsc.stop(audioCtx.currentTime + 0.05);
         }
 
-        // Attach Interactions to UI elements
         document.querySelectorAll('.interactive-element').forEach(el => {
             el.addEventListener('mouseenter', (e) => {
-                // UI Beep
                 playUIBeep();
-                
-                // Print to terminal if data-log exists
-                if (el.dataset.log) {
-                    logToTerminal(el.dataset.log);
-                }
-
-                // Glitch text trigger if it has the text-break class inside
+                if (el.dataset.log) logToTerminal(el.dataset.log);
                 const glitchText = el.querySelector('.text-break');
                 if(glitchText) glitchText.classList.add('glitch-active');
             });
-
             el.addEventListener('mouseleave', (e) => {
                 const glitchText = el.querySelector('.text-break');
                 if(glitchText) glitchText.classList.remove('glitch-active');
             });
         });
-
-        // 4. IMPROVED AUDIO ENGINE (Car Revving + PROCEDURAL BREAKCORE DRUMS)
+        // 4. AUDIO ENGINE (Drone + Breakcore Drums + Acid Synth + Void Delay)
         let audioCtx;
         let oscillator, subOsc, masterGainNode, gainNode, distortionNode, filterNode;
-        let lfo, lfoGain; // For Tape Wow/Flutter
-        let bitcrusherNode; // For Sync Degradation
-        let analyserNode; // For Real-time Oscilloscope
-        let noiseBuffer; // For Snare/Hat synthesis
+        let lfo, lfoGain; 
+        let bitcrusherNode; 
+        let analyserNode; 
+        let noiseBuffer; 
+        let delayNode, feedbackNode, delayWetGain; // Void Echo nodes
         
         let isAudioStarted = false;
         let targetRPM = 0;
@@ -932,7 +968,6 @@
             return curve;
         }
 
-        // Dynamic Audio Degradation
         function makeBitCrushCurve(bits) {
             const n_samples = 44100;
             const curve = new Float32Array(n_samples);
@@ -944,9 +979,8 @@
             return curve;
         }
 
-        // Generate white noise buffer for drum synthesis
         function initNoiseBuffer() {
-            const bufferSize = audioCtx.sampleRate * 2; // 2 seconds
+            const bufferSize = audioCtx.sampleRate * 2; 
             noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const output = noiseBuffer.getChannelData(0);
             for (let i = 0; i < bufferSize; i++) {
@@ -963,8 +997,8 @@
 
             oscillator = audioCtx.createOscillator();
             subOsc = audioCtx.createOscillator();
-            gainNode = audioCtx.createGain(); // Controls volume envelope
-            masterGainNode = audioCtx.createGain(); // Controls breakcore chopping gate
+            gainNode = audioCtx.createGain(); 
+            masterGainNode = audioCtx.createGain(); 
             distortionNode = audioCtx.createWaveShaper();
             bitcrusherNode = audioCtx.createWaveShaper();
             filterNode = audioCtx.createBiquadFilter();
@@ -979,17 +1013,23 @@
             filterNode.Q.setValueAtTime(5, audioCtx.currentTime);
 
             distortionNode.curve = makeDistortionCurve(50);
-            bitcrusherNode.curve = makeBitCrushCurve(16); // High fidelity default
+            bitcrusherNode.curve = makeBitCrushCurve(16); 
             
             gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
             gainNode.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.5);
             masterGainNode.gain.setValueAtTime(1, audioCtx.currentTime);
 
-            // Analyser for Oscilloscope
-            analyserNode = audioCtx.createAnalyser();
-            analyserNode.fftSize = 1024; // Resolution of the waveform
+            // Void Echo (Feedback Delay Network)
+            delayNode = audioCtx.createDelay(2.0);
+            delayNode.delayTime.setValueAtTime(0.33, audioCtx.currentTime); // 1/3 second echo
+            feedbackNode = audioCtx.createGain();
+            feedbackNode.gain.setValueAtTime(0.6, audioCtx.currentTime); // Echo length
+            delayWetGain = audioCtx.createGain();
+            delayWetGain.gain.setValueAtTime(0, audioCtx.currentTime); // Muted by default
 
-            // Tape Wow/Flutter LFO
+            analyserNode = audioCtx.createAnalyser();
+            analyserNode.fftSize = 1024; 
+
             lfo = audioCtx.createOscillator();
             lfoGain = audioCtx.createGain();
             lfo.type = 'sine';
@@ -1000,17 +1040,24 @@
             lfoGain.connect(oscillator.frequency);
             lfoGain.connect(subOsc.frequency);
 
+            // Dry Signal Path
             oscillator.connect(distortionNode);
             subOsc.connect(distortionNode);
-            
-            // All audio (drone + drums) routes through bitcrusher for Gestalt decay
             distortionNode.connect(bitcrusherNode); 
-            
             bitcrusherNode.connect(filterNode);
             filterNode.connect(gainNode);
-            gainNode.connect(masterGainNode); // Add breakcore master gate
-            masterGainNode.connect(analyserNode); // Tap output for visualizer
-            analyserNode.connect(audioCtx.destination); // Send to speakers
+            gainNode.connect(masterGainNode); 
+            
+            // Wet Signal Path (Delay Network)
+            masterGainNode.connect(delayNode);
+            delayNode.connect(feedbackNode);
+            feedbackNode.connect(delayNode);
+            delayNode.connect(delayWetGain);
+
+            // Output Mix
+            masterGainNode.connect(analyserNode); 
+            delayWetGain.connect(analyserNode);
+            analyserNode.connect(audioCtx.destination); 
 
             oscillator.start();
             subOsc.start();
@@ -1018,20 +1065,20 @@
             
             isAudioStarted = true;
             animateUI();
-            scheduleDrums(); // Start the procedural drum machine
+            scheduleSequencer(); // Start drums and synth
             triggerSubliminal(false); 
             drawOscilloscope(); 
             logToTerminal("AUDIO ENGINE INITIALIZED");
             logToTerminal("TYPE 'HELP' FOR CMDS");
         }
 
-        // DRUM SYNTHESIS FUNCTIONS
+        // DRUM SYNTHESIS
         function playKick(time) {
             if(isCrashed) return;
             const kickOsc = audioCtx.createOscillator();
             const kickGain = audioCtx.createGain();
             kickOsc.connect(kickGain);
-            kickGain.connect(bitcrusherNode); // Route to global effects
+            kickGain.connect(bitcrusherNode); 
             
             kickOsc.frequency.setValueAtTime(150, time);
             kickOsc.frequency.exponentialRampToValueAtTime(0.01, time + 0.5);
@@ -1063,7 +1110,6 @@
             noiseSrc.start(time);
             noiseSrc.stop(time + 0.2);
             
-            // Add a punchy body to the snare
             const osc = audioCtx.createOscillator();
             const oscGain = audioCtx.createGain();
             osc.frequency.setValueAtTime(250, time);
@@ -1086,7 +1132,7 @@
             noiseFilter.frequency.value = 7000;
             
             noiseGain.gain.setValueAtTime(0.3, time);
-            noiseGain.gain.exponentialRampToValueAtTime(0.01, time + 0.05); // Very short
+            noiseGain.gain.exponentialRampToValueAtTime(0.01, time + 0.05); 
             
             noiseSrc.connect(noiseFilter);
             noiseFilter.connect(noiseGain);
@@ -1096,47 +1142,79 @@
             noiseSrc.stop(time + 0.05);
         }
 
-        // PROCEDURAL BREAKCORE SEQUENCER
+        // ACID SYNTHESIS
+        const acidScale = [110, 130.81, 146.83, 164.81, 196, 220, 261.63, 293.66]; // Minor Pentatonic A
+        function playAcid(time) {
+            if(isCrashed) return;
+            const acidOsc = audioCtx.createOscillator();
+            const acidFilter = audioCtx.createBiquadFilter();
+            const acidGain = audioCtx.createGain();
+
+            acidOsc.type = 'sawtooth';
+            const freq = acidScale[Math.floor(Math.random() * acidScale.length)] * (Math.random() > 0.5 ? 2 : 1);
+            acidOsc.frequency.setValueAtTime(freq, time);
+
+            acidFilter.type = 'lowpass';
+            acidFilter.Q.setValueAtTime(15, time); // High resonance for Acid sound
+            
+            // Envelope filter
+            acidFilter.frequency.setValueAtTime(400, time);
+            acidFilter.frequency.exponentialRampToValueAtTime(4000, time + 0.05);
+            acidFilter.frequency.exponentialRampToValueAtTime(400, time + 0.2);
+
+            acidGain.gain.setValueAtTime(0.2, time);
+            acidGain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
+
+            acidOsc.connect(acidFilter);
+            acidFilter.connect(acidGain);
+            acidGain.connect(bitcrusherNode);
+
+            acidOsc.start(time);
+            acidOsc.stop(time + 0.2);
+        }
+
+        // PROCEDURAL SEQUENCER
         let nextNoteTime = 0.0;
         let currentStep = 0;
         const lookahead = 25.0; // ms
         const scheduleAheadTime = 0.1; // s
 
         function nextNote() {
-            const secondsPerBeat = 60.0 / (currentRPM < 80 ? 140 : 220); // Switch to 220 BPM on redline
+            const secondsPerBeat = 60.0 / (currentRPM < 80 ? 140 : 220); 
             nextNoteTime += 0.25 * secondsPerBeat; // 16th notes
             currentStep++;
             if (currentStep === 16) currentStep = 0;
         }
 
-        function scheduleDrums() {
+        function scheduleSequencer() {
             if(isCrashed) return;
             
             while (nextNoteTime < audioCtx.currentTime + scheduleAheadTime) {
-                // Only play drums when the engine is revved up (RPM > 80)
                 if (currentRPM > 80) {
-                    // Generative Breakcore Patterns based on Sync Rate
-                    const chaos = currentSync < 50 ? 0.8 : 0.2; // More random if sync is low
+                    const chaos = currentSync < 50 ? 0.8 : 0.2; 
 
-                    // Kicks on 0, 8, and randomly
+                    // Drums
                     if (currentStep === 0 || currentStep === 8 || (Math.random() < 0.1 + chaos)) {
                         playKick(nextNoteTime);
                     }
-                    // Snares on 4, 12, and randomly (Amen break style ghosts)
                     if (currentStep === 4 || currentStep === 12 || (Math.random() < 0.15 + chaos)) {
                         playSnare(nextNoteTime);
                     }
-                    // Hats almost always
                     if (Math.random() > 0.2) {
                         playHiHat(nextNoteTime);
+                    }
+
+                    // Acid Arp (Only when really flying)
+                    if (isDriving || currentRPM > 90) {
+                        if (Math.random() > 0.3) playAcid(nextNoteTime);
                     }
                 }
                 nextNote();
             }
-            setTimeout(scheduleDrums, lookahead);
+            setTimeout(scheduleSequencer, lookahead);
         }
 
-        // BIOS BOOT SEQUENCE SIMULATION
+        // BOOT LOGIC
         const bootLogs = [
             "BIOS DATE 05/08/26 17:21:00 VER 2.14",
             "CPU: ROTARY ENGINE SIMULATION ARCHITECTURE",
@@ -1157,7 +1235,6 @@
                     bootLogsContainer.appendChild(el);
                     
                     if (index === bootLogs.length - 1) {
-                        // Reveal button after last log
                         setTimeout(() => {
                             document.getElementById('boot-btn').style.opacity = '1';
                             document.getElementById('boot-btn').style.pointerEvents = 'auto';
@@ -1165,12 +1242,10 @@
                         }, 500);
                     }
                 }, delay);
-                // Randomize typing speed for realism
                 delay += 300 + Math.random() * 800; 
             });
         };
 
-        // BOOT SCREEN BUTTON LOGIC
         document.getElementById('boot-btn').addEventListener('click', async () => {
             await initAudio();
             const bootScreen = document.getElementById('boot-screen');
@@ -1182,7 +1257,6 @@
             logToTerminal("AWAITING COMMAND...");
         });
 
-        // AUDIO TOGGLE
         document.getElementById('audio-toggle').addEventListener('click', async () => {
             if (!audioCtx) return;
             const statusSpan = document.getElementById('audio-status');
@@ -1197,12 +1271,12 @@
             }
         });
 
-        // 5. DYNAMIC REDLINE/ACCELERATION (Hover over title or specific tracks)
+        // 5. ENGINE REVVING 
         const heroTitle = document.getElementById('hero-title');
         const mainWrapper = document.getElementById('main-wrapper');
         
         function revEngine(rpmLevel, freqMult, distCurve, filterOpen) {
-            if (isDriving) return; // Prevent interference if DRIVE command is active
+            if (isDriving) return; 
             targetRPM = rpmLevel;
             if (!isAudioStarted || audioCtx.state !== 'running') return;
             const now = audioCtx.currentTime;
@@ -1211,12 +1285,11 @@
             distortionNode.curve = makeDistortionCurve(distCurve); 
             filterNode.frequency.exponentialRampToValueAtTime(filterOpen, now + 0.5); 
             
-            // Screen Shake triggers on redline
             if (rpmLevel > 80) mainWrapper.classList.add('screen-shake');
         }
 
         function idleEngine() {
-            if (isDriving) return; // Cannot idle while driving
+            if (isDriving) return; 
             targetRPM = 15;
             if (!isAudioStarted || audioCtx.state !== 'running') return;
             const now = audioCtx.currentTime;
@@ -1225,40 +1298,32 @@
             distortionNode.curve = makeDistortionCurve(50);
             filterNode.frequency.exponentialRampToValueAtTime(400, now + 1);
             
-            // Remove Screen Shake
             mainWrapper.classList.remove('screen-shake');
         }
 
         heroTitle.addEventListener('mouseenter', () => revEngine(100, 4, 800, 8000));
         heroTitle.addEventListener('mouseleave', idleEngine);
 
-        // Bind tracks to dynamic RPMs and 3D Tilt Effect
         document.querySelectorAll('.retro-os-panel').forEach(card => {
-            // Track specific logic
             if (card.classList.contains('track-card')) {
                 card.addEventListener('mouseenter', () => {
                     const trpm = parseInt(card.dataset.rpm);
-                    const freqMult = trpm / 20; // Scale pitch based on RPM data
+                    const freqMult = trpm / 20; 
                     revEngine(trpm, freqMult, 300, 2000 + (trpm * 20));
                 });
                 card.addEventListener('mouseleave', idleEngine);
                 
-                // Track Click Loading Logic
                 card.addEventListener('click', () => {
-                    // Reset all
                     document.querySelectorAll('.track-card').forEach(c => {
                         c.style.borderColor = '';
                         c.querySelector('.retro-os-header').style.backgroundColor = '';
                         c.querySelector('.retro-os-header').style.color = '';
                     });
-                    
-                    // Highlight selected
                     card.style.borderColor = 'var(--red-orange)';
                     const header = card.querySelector('.retro-os-header');
                     header.style.backgroundColor = 'var(--red-orange)';
                     header.style.color = 'var(--black)';
                     
-                    // Shift base audio freq permanently based on track
                     if (audioCtx && audioCtx.state === 'running') {
                         const baseFreq = 30 + (parseInt(card.dataset.rpm) / 4);
                         oscillator.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
@@ -1271,14 +1336,13 @@
                 });
             }
 
-            // 3D Hover Effect
             card.addEventListener('mousemove', (e) => {
                 const rect = card.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
                 const centerX = rect.width / 2;
                 const centerY = rect.height / 2;
-                const rotateX = ((y - centerY) / centerY) * -5; // Max 5 deg tilt
+                const rotateX = ((y - centerY) / centerY) * -5; 
                 const rotateY = ((x - centerX) / centerX) * 5;
                 card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
             });
@@ -1288,12 +1352,12 @@
             });
         });
 
-        // 6. GLOBAL ANIMATION LOOP (Tachometer & Sync Rate)
+        // 6. GLOBAL ANIMATION LOOP 
         targetRPM = 15;
         const syncSpan = document.getElementById('sync-rate');
         let currentSync = 85.4;
 
-        // LIVE OSCILLOSCOPE RENDERER
+        // LIVE OSCILLOSCOPE
         const oscCanvas = document.getElementById('oscilloscope');
         const oscCtx = oscCanvas.getContext('2d');
         
@@ -1305,12 +1369,10 @@
             const dataArray = new Uint8Array(bufferLength);
             analyserNode.getByteTimeDomainData(dataArray);
 
-            // Semi-transparent black for trailing "phosphor" effect
             oscCtx.fillStyle = 'rgba(5, 5, 5, 0.4)'; 
             oscCtx.fillRect(0, 0, oscCanvas.width, oscCanvas.height);
 
             oscCtx.lineWidth = 1.5;
-            // Shift color to cyan if in DRIVE mode, otherwise red-orange
             oscCtx.strokeStyle = isDriving ? '#00FFFF' : '#FF3D00'; 
             oscCtx.beginPath();
 
@@ -1321,11 +1383,8 @@
                 const v = dataArray[i] / 128.0;
                 const y = v * (oscCanvas.height / 2);
 
-                if (i === 0) {
-                    oscCtx.moveTo(x, y);
-                } else {
-                    oscCtx.lineTo(x, y);
-                }
+                if (i === 0) oscCtx.moveTo(x, y);
+                else oscCtx.lineTo(x, y);
                 x += sliceWidth;
             }
 
@@ -1333,11 +1392,36 @@
             oscCtx.stroke();
         }
 
-        // RADAR ANOMALY RENDERER
+        // INTERACTIVE RADAR (DEFENSE GAME)
         const radarCanvas = document.getElementById('radar-canvas');
         const rCtx = radarCanvas.getContext('2d');
         let radarAngle = 0;
         let anomalies = [];
+
+        // Radar Interaction (Shooting anomalies)
+        radarCanvas.addEventListener('mousedown', (e) => {
+            if (isCrashed) return;
+            const rect = radarCanvas.getBoundingClientRect();
+            // Scale mouse coords to canvas internal resolution
+            const scaleX = radarCanvas.width / rect.width;
+            const scaleY = radarCanvas.height / rect.height;
+            const mx = (e.clientX - rect.left) * scaleX;
+            const my = (e.clientY - rect.top) * scaleY;
+
+            let hit = false;
+            for (let i = anomalies.length - 1; i >= 0; i--) {
+                const a = anomalies[i];
+                const dist = Math.hypot(mx - a.x, my - a.y);
+                if (dist < 15) { // Hit radius
+                    anomalies.splice(i, 1);
+                    hit = true;
+                    currentSync = Math.min(100, currentSync + 5);
+                    logToTerminal("ANOMALY PURGED. SYNC RESTORED.");
+                    playUIBeep(2500, 'sine');
+                }
+            }
+            if(!hit) playUIBeep(150, 'sawtooth');
+        });
 
         function drawRadar() {
             if(isCrashed) return;
@@ -1345,11 +1429,9 @@
             const cy = radarCanvas.height / 2;
             const radius = radarCanvas.width / 2 - 2;
 
-            // Fade background
             rCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
             rCtx.fillRect(0, 0, radarCanvas.width, radarCanvas.height);
 
-            // Draw grid
             rCtx.strokeStyle = 'rgba(255, 61, 0, 0.2)';
             rCtx.lineWidth = 1;
             rCtx.beginPath();
@@ -1360,7 +1442,6 @@
             rCtx.moveTo(0, cy); rCtx.lineTo(radarCanvas.width, cy);
             rCtx.stroke();
 
-            // Sweeper
             radarAngle += 0.05;
             const sweepX = cx + Math.cos(radarAngle) * radius;
             const sweepY = cy + Math.sin(radarAngle) * radius;
@@ -1371,41 +1452,145 @@
             rCtx.lineTo(sweepX, sweepY);
             rCtx.stroke();
 
-            // Manage Anomalies (More spawn if Sync is low)
-            if (currentSync < 60 && Math.random() > (currentSync / 100)) {
+            // Spawn Anomalies
+            if (currentSync < 70 && Math.random() > (currentSync / 100)) {
+                // Ensure they spawn inside circle
+                const aAngle = Math.random() * Math.PI * 2;
+                const aRad = Math.random() * (radius * 0.9);
                 anomalies.push({
-                    x: cx + (Math.random() * 2 - 1) * radius,
-                    y: cy + (Math.random() * 2 - 1) * radius,
-                    life: 1.0
+                    x: cx + Math.cos(aAngle) * aRad,
+                    y: cy + Math.sin(aAngle) * aRad,
+                    life: 1.0,
+                    punished: false
                 });
             }
 
-            // Draw Anomalies
             document.getElementById('anomaly-count').innerText = anomalies.length;
             for (let i = anomalies.length - 1; i >= 0; i--) {
                 const a = anomalies[i];
                 rCtx.fillStyle = `rgba(255, 0, 0, ${a.life})`;
                 rCtx.beginPath();
-                rCtx.arc(a.x, a.y, 3, 0, Math.PI * 2);
+                rCtx.arc(a.x, a.y, 4, 0, Math.PI * 2);
                 rCtx.fill();
-                a.life -= 0.02; // Fade out
-                if (a.life <= 0) anomalies.splice(i, 1);
+                
+                // Pulse effect
+                rCtx.strokeStyle = `rgba(255, 0, 0, ${a.life * 0.5})`;
+                rCtx.beginPath();
+                rCtx.arc(a.x, a.y, 8 + Math.sin(Date.now() / 100) * 4, 0, Math.PI * 2);
+                rCtx.stroke();
+
+                a.life -= 0.005; // Fade slowly
+                
+                if (a.life <= 0) {
+                    // Missed anomaly punishment
+                    if(!a.punished) {
+                        currentSync -= 2;
+                        logToTerminal("WARNING: ANOMALY BREACH. SYNC -2%");
+                    }
+                    anomalies.splice(i, 1);
+                }
             }
         }
 
-        // TRIGGER KERNEL PANIC
+        // TESSERACT (OPTICS) RENDERER
+        const tCanvas = document.getElementById('optics-canvas');
+        const tCtx = tCanvas.getContext('2d');
+        let angleOptics = 0;
+        let audioReactScale = 0; // Hooks into FFT data
+
+        // 8 vertices of a cube
+        const cubeVertices = [
+            [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],
+            [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]
+        ];
+        // Connections
+        const cubeEdges = [
+            [0,1], [1,2], [2,3], [3,0], // back face
+            [4,5], [5,6], [6,7], [7,4], // front face
+            [0,4], [1,5], [2,6], [3,7]  // connecting edges
+        ];
+
+        function drawOptics() {
+            if(isCrashed) return;
+            tCtx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            tCtx.fillRect(0, 0, tCanvas.width, tCanvas.height);
+
+            const cx = tCanvas.width / 2;
+            const cy = tCanvas.height / 2;
+            
+            // Audio Reactivity (Get low frequencies for scaling)
+            if (isAudioStarted && !isCrashed) {
+                const dataArray = new Uint8Array(analyserNode.frequencyBinCount);
+                analyserNode.getByteFrequencyData(dataArray);
+                // Average the first 10 bins (Bass/Kicks)
+                let bassAvg = 0;
+                for(let i=0; i<10; i++) bassAvg += dataArray[i];
+                bassAvg /= 10;
+                // Smooth interpolation for the pulse
+                audioReactScale += ((bassAvg / 255) * 15 - audioReactScale) * 0.2;
+            }
+            
+            // Rotation speed alters based on sync
+            angleOptics += (currentSync < 50) ? 0.1 : 0.02;
+
+            function project(vertex, scaleOffset) {
+                // Simple 3D rotation around Y and X
+                const x = vertex[0];
+                const y = vertex[1];
+                const z = vertex[2];
+
+                // Rotate Y
+                let rx = x * Math.cos(angleOptics) - z * Math.sin(angleOptics);
+                let rz = x * Math.sin(angleOptics) + z * Math.cos(angleOptics);
+                // Rotate X
+                let ry = y * Math.cos(angleOptics*0.7) - rz * Math.sin(angleOptics*0.7);
+                
+                // Add audio-reactive pulse to the scale
+                const scale = 30 + scaleOffset + audioReactScale; 
+                // Basic perspective
+                const zOffset = rz + 4; 
+                return {
+                    x: cx + (rx / zOffset) * scale * 4,
+                    y: cy + (ry / zOffset) * scale * 4
+                };
+            }
+
+            tCtx.strokeStyle = 'var(--red-orange)';
+            tCtx.lineWidth = 1;
+
+            // Draw outer cube
+            cubeEdges.forEach(edge => {
+                const p1 = project(cubeVertices[edge[0]], 10);
+                const p2 = project(cubeVertices[edge[1]], 10);
+                tCtx.beginPath(); tCtx.moveTo(p1.x, p1.y); tCtx.lineTo(p2.x, p2.y); tCtx.stroke();
+            });
+            // Draw inner cube
+            cubeEdges.forEach(edge => {
+                const p1 = project(cubeVertices[edge[0]], -10);
+                const p2 = project(cubeVertices[edge[1]], -10);
+                tCtx.beginPath(); tCtx.moveTo(p1.x, p1.y); tCtx.lineTo(p2.x, p2.y); tCtx.stroke();
+            });
+            // Draw tesseract connectors
+            for(let i=0; i<8; i++) {
+                const p1 = project(cubeVertices[i], 10);
+                const p2 = project(cubeVertices[i], -10);
+                tCtx.beginPath(); tCtx.moveTo(p1.x, p1.y); tCtx.lineTo(p2.x, p2.y); tCtx.stroke();
+            }
+        }
+
+
+        // KERNEL PANIC
         function triggerKernelPanic() {
             if (isCrashed) return;
             isCrashed = true;
             document.getElementById('main-wrapper').style.display = 'none';
             document.getElementById('kernel-panic').style.display = 'flex';
-            document.body.className = ''; // Remove glitches/styles
+            document.body.className = ''; 
             
             if (audioCtx && audioCtx.state === 'running') {
-                audioCtx.suspend(); // Kill audio
+                audioCtx.suspend(); 
             }
 
-            // Memory dump animation
             let dumpCounter = 0;
             const dumpEl = document.getElementById('panic-counter');
             const dumpInterval = setInterval(() => {
@@ -1420,16 +1605,18 @@
         }
 
         document.getElementById('reboot-btn').addEventListener('click', () => {
-            location.reload(); // Actually refresh the page
+            location.reload(); 
         });
 
-
+        // MAIN LOOP
         function animateUI() {
             if (!isAudioStarted || isCrashed) return;
             
-            drawRadar(); // Update radar window
+            drawRadar();
+            if(document.getElementById('optics-container').style.display !== 'none') {
+                drawOptics();
+            }
 
-            // TACHOMETER
             currentRPM += (targetRPM - currentRPM) * 0.1;
             let displayRPM = currentRPM;
             if (targetRPM === 0 || targetRPM === 15) {
@@ -1441,54 +1628,37 @@
             rpmBar.style.width = `${Math.min(100, displayRPM)}%`;
             rpmBar.style.backgroundColor = displayRPM > 80 ? 'var(--red-orange)' : 'var(--white)';
 
-            // Red Eye Reaction
             const redEye = document.getElementById('void-eye');
-            if (displayRPM > 80) {
-                redEye.classList.add('active');
-            } else {
-                redEye.classList.remove('active');
-            }
+            if (displayRPM > 80) redEye.classList.add('active');
+            else redEye.classList.remove('active');
 
-            // BREAKCORE AUDIO CHOPPER (When Redlining)
-            // Rapidly toggle the master gain to simulate glitchy drum chops
             if (displayRPM > 80 && audioCtx.state === 'running') {
-                if (Math.random() > 0.6) { // 40% chance to drop volume per frame
+                if (Math.random() > 0.6) { 
                     masterGainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-                    // Rapid recovery
                     masterGainNode.gain.setValueAtTime(1, audioCtx.currentTime + 0.05);
                 }
             } else {
-                // Ensure audio is unmuted if not redlining
                 masterGainNode.gain.setValueAtTime(1, audioCtx.currentTime);
             }
 
-            // SYNC RATE (Signalis / NieR feature)
             if (Math.random() > 0.95) {
-                // If redlining, sync rate drops (destabilization)
-                if (displayRPM > 80) {
-                    currentSync -= Math.random() * 2;
-                } else {
-                    // Slowly recover
-                    currentSync += Math.random();
-                }
+                if (displayRPM > 80) currentSync -= Math.random() * 2;
+                else currentSync += Math.random();
+                
                 currentSync = Math.max(0, Math.min(100, currentSync));
                 syncSpan.innerText = currentSync.toFixed(1);
                 
-                if(currentSync < 50 && Math.random() > 0.8) {
-                    logToTerminal("WARNING: GESTALT SYNC CRITICAL");
-                }
+                if(currentSync < 50 && Math.random() > 0.8) logToTerminal("WARNING: GESTALT SYNC CRITICAL");
                 
-                // FATAL CRASH CHECK
                 if (currentSync <= 0) {
                     triggerKernelPanic();
-                    return; // Stop animation loop
+                    return; 
                 }
             }
 
-            // TRIGGER VISUAL GLITCH IF SYNC IS LOW
             const bodyEl = document.body;
             if (currentSync < 50) {
-                if (!bodyEl.classList.contains('global-glitch')) {
+                if (!bodyEl.classList.contains('global-glitch') && !bodyEl.classList.contains('awakened-mode')) {
                     bodyEl.classList.add('global-glitch');
                     logToTerminal("INITIATING EMERGENCY PROTOCOLS...");
                 }
@@ -1498,35 +1668,40 @@
                     // Sync 50 = 8 bits, Sync 0 = 2 bits (maximum crush)
                     const crushBits = Math.max(2, Math.floor((currentSync / 50) * 8));
                     bitcrusherNode.curve = makeBitCrushCurve(crushBits);
+                    
+                    // Increase the "Void Delay" as sync drops
+                    const delayVol = 1.0 - (currentSync / 50);
+                    delayWetGain.gain.setValueAtTime(delayVol, audioCtx.currentTime);
                 }
             } else {
                 bodyEl.classList.remove('global-glitch');
                 // Restore audio fidelity
-                if (isAudioStarted) bitcrusherNode.curve = makeBitCrushCurve(16);
+                if (isAudioStarted && audioCtx.state === 'running') {
+                    bitcrusherNode.curve = makeBitCrushCurve(16);
+                    delayWetGain.gain.setValueAtTime(0, audioCtx.currentTime);
+                }
             }
 
             setTimeout(animateUI, 50);
         }
 
         // 7. SUBLIMINAL FLASH ENGINE & CORE DUMP EASTER EGG
-        const subliminalWords = ["WAKE UP", "FLESH", "REPLIKA", "SIGNAL LOST", "OBEY", "OVERWRITE"];
+        const subliminalWords = ["WAKE UP", "FLESH", "REPLIKA", "SIGNAL LOST", "OBEY", "OVERWRITE", "ANGEL"];
         
         function triggerSubliminal(force = false) {
             if (!isAudioStarted && !force || isCrashed) return;
             
-            // 0.2% chance per frame to flash a message, increased if sync is low
             const chance = currentSync < 50 ? 0.95 : 0.998;
             
             if (force || Math.random() > chance) {
                 const subEl = document.getElementById('subliminal');
                 subEl.innerText = subliminalWords[Math.floor(Math.random() * subliminalWords.length)];
                 
-                // Reset animation
                 subEl.classList.remove('flash-anim');
                 void subEl.offsetWidth; 
                 subEl.classList.add('flash-anim');
                 
-                playUIBeep(200, 'sawtooth'); // Harsh digital screech
+                playUIBeep(200, 'sawtooth'); 
                 if(Math.random() > 0.5 && !force) logToTerminal("??? INTERCEPTED SIGNAL ???");
             }
             
@@ -1534,7 +1709,7 @@
         }
 
         document.getElementById('core-dump-trigger').addEventListener('click', () => {
-            currentSync -= 40; // Instantly tank the sync rate
+            currentSync -= 40; 
             
             if (currentSync <= 0) {
                 triggerKernelPanic();
@@ -1544,7 +1719,6 @@
             playUIBeep(800, 'square');
             logToTerminal("CRITICAL: MANUAL CORE DUMP INITIATED");
             
-            // Spam terminal
             let spamCount = 0;
             const spamInterval = setInterval(() => {
                 const memAddr = "0x" + Math.floor(Math.random()*16777215).toString(16).toUpperCase();
@@ -1560,14 +1734,13 @@
             const y = (e.clientY / window.innerHeight - 0.5) * 20;
             heroTitle.style.transform = `translateX(${x}px) translateY(${y}px) skewX(${x/2}deg)`;
             
-            // Ghost Cursor effect (Lain / Wired vibe)
-            if (Math.random() > 0.4) { // Don't spawn on every single pixel to save performance
+            if (Math.random() > 0.4) { 
                 const ghost = document.createElement('div');
                 ghost.className = 'ghost-cursor';
                 ghost.style.left = `${e.clientX}px`;
                 ghost.style.top = `${e.clientY}px`;
                 document.body.appendChild(ghost);
-                setTimeout(() => ghost.remove(), 500); // Remove after animation
+                setTimeout(() => ghost.remove(), 500); 
             }
         });
 
