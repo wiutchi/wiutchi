@@ -275,6 +275,23 @@
             text-shadow: 0 0 10px var(--white);
         }
 
+        /* Ghost Cursor Trail */
+        .ghost-cursor {
+            position: fixed;
+            width: 16px;
+            height: 16px;
+            border: 1px solid var(--red-orange);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99999;
+            transform: translate(-50%, -50%);
+            animation: fadeOut 0.5s forwards;
+        }
+        @keyframes fadeOut {
+            0% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(2.5); }
+        }
+
         /* Custom Cursor */
         body {
             cursor: crosshair;
@@ -294,9 +311,15 @@
     <!-- Perspective Background Grid -->
     <div class="perspective-grid"></div>
 
-    <!-- Live Terminal Log -->
-    <div id="terminal-log" class="fixed bottom-4 left-4 z-40 text-[10px] text-[#FF3D00] font-bold tracking-widest uppercase flex flex-col justify-end w-64 h-32 pointer-events-none opacity-80">
-        <!-- JS injects logs here -->
+    <!-- Live Terminal / Interactive CLI -->
+    <div id="terminal-container" class="fixed bottom-4 left-4 z-40 text-[10px] text-[#FF3D00] font-bold tracking-widest uppercase flex flex-col justify-end w-72 h-48 pointer-events-auto opacity-90 bg-black/70 p-3 border border-[#FF3D00]/30 backdrop-blur-sm transition-all hover:border-[#FF3D00] hover:bg-black/90">
+        <div id="terminal-log" class="flex flex-col justify-end overflow-hidden mb-2 h-full">
+            <!-- JS injects logs here -->
+        </div>
+        <div class="flex items-center gap-2 border-t border-[#FF3D00]/30 pt-2">
+            <span class="animate-pulse">></span>
+            <input id="cmd-input" type="text" class="bg-transparent border-none outline-none text-white w-full placeholder:text-[#FF3D00]/40 font-black" placeholder="AWAITING COMMAND..." autocomplete="off">
+        </div>
     </div>
 
     <!-- Boot Screen -->
@@ -558,11 +581,48 @@
             el.innerHTML = `> ${msg}`;
             logContainer.appendChild(el);
             
-            // Keep only the last 5 logs
-            if (logContainer.children.length > 5) {
+            // Keep only the last 6 logs
+            if (logContainer.children.length > 6) {
                 logContainer.removeChild(logContainer.firstChild);
             }
         }
+
+        // TERMINAL COMMAND INTERFACE
+        const cmdInput = document.getElementById('cmd-input');
+        cmdInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const val = cmdInput.value.trim().toUpperCase();
+                cmdInput.value = '';
+                if (!val) return;
+                
+                logToTerminal(`<span class="text-white">${val}</span>`);
+                
+                switch(val) {
+                    case 'HELP':
+                        logToTerminal("CMDS: REBOOT, STATUS, WAKE, DIR");
+                        break;
+                    case 'REBOOT':
+                        currentSync = 100;
+                        logToTerminal("SYNC RATE RESTORED TO 100%");
+                        playUIBeep(800, 'sine');
+                        break;
+                    case 'WAKE':
+                    case 'WAKE UP':
+                        currentSync = 0;
+                        logToTerminal("CRITICAL: CONSCIOUSNESS OVERRIDE");
+                        triggerSubliminal(true);
+                        break;
+                    case 'STATUS':
+                        logToTerminal(`SYNC: ${currentSync.toFixed(1)}% | RPM: ${currentRPM.toFixed(0)}`);
+                        break;
+                    case 'DIR':
+                        logToTerminal("NO FILES FOUND. ONLY ROT.");
+                        break;
+                    default:
+                        logToTerminal("ERR: UNKNOWN COMMAND");
+                }
+            }
+        });
 
         // 2. UI AUDIO BEEP (VA-11 / NieR UI Feel)
         function playUIBeep(freq = 1200, type = 'square') {
@@ -603,10 +663,11 @@
             });
         });
 
-        // 3. IMPROVED AUDIO ENGINE (Car Revving + Breakcore)
+        // 3. IMPROVED AUDIO ENGINE (Car Revving + Breakcore + Bitcrusher)
         let audioCtx;
         let oscillator, subOsc, gainNode, distortionNode, filterNode;
         let lfo, lfoGain; // For Tape Wow/Flutter
+        let bitcrusherNode; // For Sync Degradation
         let isAudioStarted = false;
         let targetRPM = 0;
         let currentRPM = 0;
@@ -621,6 +682,18 @@
             return curve;
         }
 
+        // Dynamic Audio Degradation
+        function makeBitCrushCurve(bits) {
+            const n_samples = 44100;
+            const curve = new Float32Array(n_samples);
+            const steps = Math.pow(2, Math.max(1, bits));
+            for (let i = 0; i < n_samples; ++i) {
+                const x = (i * 2) / n_samples - 1;
+                curve[i] = Math.round(x * steps) / steps;
+            }
+            return curve;
+        }
+
         async function initAudio() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') await audioCtx.resume();
@@ -630,6 +703,7 @@
             subOsc = audioCtx.createOscillator();
             gainNode = audioCtx.createGain();
             distortionNode = audioCtx.createWaveShaper();
+            bitcrusherNode = audioCtx.createWaveShaper();
             filterNode = audioCtx.createBiquadFilter();
 
             oscillator.type = 'sawtooth';
@@ -642,6 +716,7 @@
             filterNode.Q.setValueAtTime(5, audioCtx.currentTime);
 
             distortionNode.curve = makeDistortionCurve(50);
+            bitcrusherNode.curve = makeBitCrushCurve(16); // High fidelity default
             
             gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
             gainNode.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.5);
@@ -650,8 +725,8 @@
             lfo = audioCtx.createOscillator();
             lfoGain = audioCtx.createGain();
             lfo.type = 'sine';
-            lfo.frequency.setValueAtTime(0.5, audioCtx.currentTime); // Slow wobble
-            lfoGain.gain.setValueAtTime(1.5, audioCtx.currentTime); // Depth of pitch bend
+            lfo.frequency.setValueAtTime(0.5, audioCtx.currentTime); 
+            lfoGain.gain.setValueAtTime(1.5, audioCtx.currentTime); 
             
             lfo.connect(lfoGain);
             lfoGain.connect(oscillator.frequency);
@@ -659,7 +734,8 @@
 
             oscillator.connect(distortionNode);
             subOsc.connect(distortionNode);
-            distortionNode.connect(filterNode);
+            distortionNode.connect(bitcrusherNode); // Route through crusher
+            bitcrusherNode.connect(filterNode);
             filterNode.connect(gainNode);
             gainNode.connect(audioCtx.destination);
 
@@ -669,8 +745,9 @@
             
             isAudioStarted = true;
             animateUI();
-            triggerSubliminal(); // Start subliminal loop
+            triggerSubliminal(false); // Start subliminal loop
             logToTerminal("AUDIO ENGINE INITIALIZED");
+            logToTerminal("TYPE 'HELP' FOR CMDS");
         }
 
         // BOOT SCREEN
@@ -810,8 +887,17 @@
                     bodyEl.classList.add('global-glitch');
                     logToTerminal("INITIATING EMERGENCY PROTOCOLS...");
                 }
+                
+                // Degrade audio dynamically based on how low sync is
+                if (audioCtx.state === 'running') {
+                    // Sync 50 = 8 bits, Sync 0 = 2 bits (maximum crush)
+                    const crushBits = Math.max(2, Math.floor((currentSync / 50) * 8));
+                    bitcrusherNode.curve = makeBitCrushCurve(crushBits);
+                }
             } else {
                 bodyEl.classList.remove('global-glitch');
+                // Restore audio fidelity
+                if (isAudioStarted) bitcrusherNode.curve = makeBitCrushCurve(16);
             }
 
             setTimeout(animateUI, 50);
@@ -820,13 +906,13 @@
         // 6. SUBLIMINAL FLASH ENGINE & CORE DUMP EASTER EGG
         const subliminalWords = ["WAKE UP", "FLESH", "REPLIKA", "SIGNAL LOST", "OBEY", "OVERWRITE"];
         
-        function triggerSubliminal() {
-            if (!isAudioStarted) return;
+        function triggerSubliminal(force = false) {
+            if (!isAudioStarted && !force) return;
             
             // 0.2% chance per frame to flash a message, increased if sync is low
             const chance = currentSync < 50 ? 0.95 : 0.998;
             
-            if (Math.random() > chance) {
+            if (force || Math.random() > chance) {
                 const subEl = document.getElementById('subliminal');
                 subEl.innerText = subliminalWords[Math.floor(Math.random() * subliminalWords.length)];
                 
@@ -836,9 +922,10 @@
                 subEl.classList.add('flash-anim');
                 
                 playUIBeep(200, 'sawtooth'); // Harsh digital screech
-                if(Math.random() > 0.5) logToTerminal("??? INTERCEPTED SIGNAL ???");
+                if(Math.random() > 0.5 && !force) logToTerminal("??? INTERCEPTED SIGNAL ???");
             }
-            requestAnimationFrame(triggerSubliminal);
+            
+            if(!force) requestAnimationFrame(() => triggerSubliminal(false));
         }
 
         document.getElementById('core-dump-trigger').addEventListener('click', () => {
@@ -856,11 +943,21 @@
             }, 100);
         });
 
-        // 7. MOUSE PARALLAX (Subtle visual distortion aesthetic)
+        // 7. MOUSE PARALLAX & GHOST CURSOR
         document.addEventListener('mousemove', (e) => {
             const x = (e.clientX / window.innerWidth - 0.5) * 20;
             const y = (e.clientY / window.innerHeight - 0.5) * 20;
             heroTitle.style.transform = `translateX(${x}px) translateY(${y}px) skewX(${x/2}deg)`;
+            
+            // Ghost Cursor effect (Lain / Wired vibe)
+            if (Math.random() > 0.4) { // Don't spawn on every single pixel to save performance
+                const ghost = document.createElement('div');
+                ghost.className = 'ghost-cursor';
+                ghost.style.left = `${e.clientX}px`;
+                ghost.style.top = `${e.clientY}px`;
+                document.body.appendChild(ghost);
+                setTimeout(() => ghost.remove(), 500); // Remove after animation
+            }
         });
     </script>
 </body>
