@@ -815,7 +815,7 @@
             }
         }
 
-        // 1. GENERIC DRAGGABLE WINDOW LOGIC
+        // 1. GENERIC DRAGGABLE WINDOW LOGIC WITH MOBILE CONSTRAINTS
         let zIndexCounter = 50;
 
         document.querySelectorAll('.draggable-window').forEach(windowEl => {
@@ -856,8 +856,19 @@
                 if (!isDragging) return;
                 const dx = clientX - startX;
                 const dy = clientY - startY;
-                windowEl.style.left = (initialLeft + dx) + 'px';
-                windowEl.style.top = (initialTop + dy) + 'px';
+                
+                // Add boundaries so it can't be dragged off screen completely
+                let newLeft = initialLeft + dx;
+                let newTop = initialTop + dy;
+                
+                const maxX = window.innerWidth - 50; // Keep at least 50px visible
+                const maxY = window.innerHeight - 50;
+                
+                newLeft = Math.max(-windowEl.offsetWidth + 50, Math.min(newLeft, maxX));
+                newTop = Math.max(0, Math.min(newTop, maxY)); // Top boundary is hard 0
+
+                windowEl.style.left = newLeft + 'px';
+                windowEl.style.top = newTop + 'px';
             }
 
             document.addEventListener('mousemove', (e) => onDrag(e.clientX, e.clientY));
@@ -880,7 +891,7 @@
             if(btnClose) btnClose.addEventListener('click', () => windowEl.style.display = 'none');
         });
 
-        // 2. TERMINAL LOG SYSTEM
+        // 2. TERMINAL LOG SYSTEM (WITH XSS PREVENTION)
         const logContainer = document.getElementById('terminal-log');
 
         function logToTerminal(msg) {
@@ -910,9 +921,12 @@
 
         cmdInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                const val = cmdInput.value.trim().toUpperCase();
+                const rawVal = cmdInput.value.trim().toUpperCase();
                 cmdInput.value = '';
-                if (!val) return;
+                if (!rawVal) return;
+                
+                // Sanitize input to prevent HTML injection/XSS
+                const val = rawVal.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                 
                 logToTerminal(`<span class="text-white">${val}</span>`);
                 
@@ -959,7 +973,6 @@
                         
                         if(audioCtx && audioCtx.state === 'running') {
                             const now = audioCtx.currentTime;
-                            // Pitch down to 0 super fast
                             oscillator.frequency.exponentialRampToValueAtTime(0.01, now + 1.5);
                             subOsc.frequency.exponentialRampToValueAtTime(0.01, now + 1.5);
                             filterNode.frequency.exponentialRampToValueAtTime(10, now + 1.5);
@@ -977,7 +990,7 @@
                         document.body.classList.remove('awakened-mode', 'drive-mode');
                         document.body.classList.add('soma-mode');
                         isDriving = false;
-                        revEngine(30, 0.5, 10, 800); // Slow, muffled, sad
+                        revEngine(30, 0.5, 10, 800); 
                         speakVoice("I often think about the god who blessed us with this cryptic puzzle.", 0.1, 0.6);
                         break;
                     case 'EXEC 9942':
@@ -1271,7 +1284,7 @@
         }
 
         // ACID SYNTHESIS
-        const acidScale = [110, 130.81, 146.83, 164.81, 196, 220, 261.63, 293.66]; // Minor Pentatonic A
+        const acidScale = [110, 130.81, 146.83, 164.81, 196, 220, 261.63, 293.66]; 
         function playAcid(time) {
             if(isCrashed) return;
             const acidOsc = audioCtx.createOscillator();
@@ -1303,12 +1316,12 @@
         // PROCEDURAL SEQUENCER
         let nextNoteTime = 0.0;
         let currentStep = 0;
-        const lookahead = 25.0; // ms
-        const scheduleAheadTime = 0.1; // s
+        const lookahead = 25.0; 
+        const scheduleAheadTime = 0.1; 
 
         function nextNote() {
             const secondsPerBeat = 60.0 / (currentRPM < 80 ? 140 : 220); 
-            nextNoteTime += 0.25 * secondsPerBeat; // 16th notes
+            nextNoteTime += 0.25 * secondsPerBeat; 
             currentStep++;
             if (currentStep === 16) currentStep = 0;
         }
@@ -1372,6 +1385,8 @@
         };
 
         document.getElementById('boot-btn').addEventListener('click', async () => {
+            // iOS Safari requires audio context to be created in the click handler
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             await initAudio();
             const bootScreen = document.getElementById('boot-screen');
             bootScreen.style.opacity = '0';
@@ -1451,8 +1466,9 @@
                     header.style.color = 'var(--black)';
                     
                     if(card.dataset.theme) {
-                        document.documentElement.style.setProperty('--red-orange', card.dataset.theme);
-                        logToTerminal(`SYSTEM COLOR OVERRIDE: ${card.dataset.theme}`);
+                        currentThemeColor = card.dataset.theme;
+                        document.documentElement.style.setProperty('--red-orange', currentThemeColor);
+                        logToTerminal(`SYSTEM COLOR OVERRIDE: ${currentThemeColor}`);
                     }
                     
                     if (audioCtx && audioCtx.state === 'running') {
@@ -1488,6 +1504,7 @@
         targetRPM = 15;
         const syncSpan = document.getElementById('sync-rate');
         let currentSync = 85.4;
+        let currentThemeColor = '#FF3D00'; 
 
         // LIVE OSCILLOSCOPE
         const oscCanvas = document.getElementById('oscilloscope');
@@ -1505,7 +1522,7 @@
             oscCtx.fillRect(0, 0, oscCanvas.width, oscCanvas.height);
 
             oscCtx.lineWidth = 1.5;
-            oscCtx.strokeStyle = isDriving ? '#00FFFF' : 'var(--red-orange)'; 
+            oscCtx.strokeStyle = isDriving ? '#00FFFF' : currentThemeColor; 
             oscCtx.beginPath();
 
             const sliceWidth = oscCanvas.width * 1.0 / bufferLength;
@@ -1562,7 +1579,7 @@
             rCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
             rCtx.fillRect(0, 0, radarCanvas.width, radarCanvas.height);
 
-            rCtx.strokeStyle = 'var(--red-orange)';
+            rCtx.strokeStyle = currentThemeColor;
             rCtx.globalAlpha = 0.2;
             rCtx.lineWidth = 1;
             rCtx.beginPath();
@@ -1577,7 +1594,7 @@
             radarAngle += 0.05;
             const sweepX = cx + Math.cos(radarAngle) * radius;
             const sweepY = cy + Math.sin(radarAngle) * radius;
-            rCtx.strokeStyle = 'var(--red-orange)';
+            rCtx.strokeStyle = currentThemeColor;
             rCtx.globalAlpha = 0.8;
             rCtx.lineWidth = 2;
             rCtx.beginPath();
@@ -1601,7 +1618,6 @@
             for (let i = anomalies.length - 1; i >= 0; i--) {
                 const a = anomalies[i];
                 
-                // Move anomalies towards center based on RPM speed
                 const angleToCenter = Math.atan2(cy - a.y, cx - a.x);
                 const speed = 0.1 + (currentRPM / 300);
                 a.x += Math.cos(angleToCenter) * speed;
@@ -1622,7 +1638,6 @@
                 a.life -= 0.002; 
                 
                 if (distToCenter < 10) {
-                    // Core breached!
                     currentSync -= 10;
                     logToTerminal("CRITICAL: CORE BREACHED. SYNC -10%");
                     playUIBeep(100, 'sawtooth');
@@ -1721,7 +1736,7 @@
                 };
             }
 
-            tCtx.strokeStyle = 'var(--red-orange)';
+            tCtx.strokeStyle = currentThemeColor;
             tCtx.lineWidth = 1;
 
             cubeEdges.forEach(edge => {
@@ -1746,7 +1761,6 @@
             if (isCrashed) return;
             isCrashed = true;
             
-            // Set persistence flag so the ghost remembers you crashed next time you boot
             localStorage.setItem('wiutchi_crashed', 'true');
 
             document.getElementById('main-wrapper').style.display = 'none';
@@ -1795,18 +1809,15 @@
             rpmBar.style.width = `${Math.min(100, displayRPM)}%`;
             rpmBar.style.backgroundColor = displayRPM > 80 ? 'var(--red-orange)' : 'var(--white)';
 
-            // Dynamically warp the perspective grid based on Sync and RPM
             if (!document.body.classList.contains('soma-mode')) {
                 const warpGrid = document.getElementById('warp-grid');
                 const warpIntensity = (100 - currentSync) * 0.05;
                 const rpmIntensity = (currentRPM / 100);
-                // Math.sin provides a waving effect over time
                 const timeFactor = Date.now() / 500;
                 
                 const newSkewX = Math.sin(timeFactor) * warpIntensity;
                 const newRotateZ = Math.cos(timeFactor * 1.5) * (warpIntensity + (rpmIntensity * 5));
                 
-                // Update CSS variables directly for smooth transform interpolation
                 document.documentElement.style.setProperty('--warp-x', `${newSkewX}deg`);
                 document.documentElement.style.setProperty('--warp-z', `${newRotateZ}deg`);
             }
