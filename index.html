@@ -3,251 +3,372 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WIUTCHI | Official Site</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>WIUTCHI // SYSTEM_OVERRIDE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syncopate:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            --accent: #FF4500; /* Reddish Orange */
-            --black: #0a0a0a;
-            --white: #ffffff;
-            --gray: #1a1a1a;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --red-orange: #FF3D00;
+            --black: #050505;
+            --white: #F5F5F5;
+            --glitch-speed: 0.15s;
         }
 
         body {
             background-color: var(--black);
             color: var(--white);
-            line-height: 1.6;
+            font-family: 'Space Mono', monospace;
             overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 50%, #1a0a00 0%, #050505 100%);
         }
 
-        /* Navigation */
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 2rem 10%;
+        .heading { font-family: 'Syncopate', sans-serif; letter-spacing: -2px; }
+
+        /* CRT Flicker */
+        @keyframes flicker {
+            0% { opacity: 0.95; }
+            5% { opacity: 0.85; }
+            10% { opacity: 0.95; }
+            15% { opacity: 1; }
+            50% { opacity: 0.95; }
+            55% { opacity: 0.8; }
+            60% { opacity: 0.98; }
+            100% { opacity: 1; }
+        }
+
+        /* Scanning Line Effect */
+        body::before {
+            content: " ";
             position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 9998;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        .scanline {
             width: 100%;
-            z-index: 1000;
-            background: rgba(10, 10, 10, 0.8);
-            backdrop-filter: blur(10px);
+            height: 100px;
+            z-index: 9999;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, var(--red-orange) 50%, rgba(0, 0, 0, 0) 100%);
+            opacity: 0.1;
+            position: fixed;
+            bottom: 100%;
+            animation: scanline 6s linear infinite;
+            pointer-events: none;
         }
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 900;
-            letter-spacing: 5px;
-            color: var(--white);
-            text-decoration: none;
-            text-transform: uppercase;
+        @keyframes scanline {
+            0% { bottom: 100%; }
+            100% { bottom: -100%; }
         }
 
-        .logo span {
-            color: var(--accent);
+        /* Chaotic Borders */
+        .cyber-border {
+            border: 2px solid var(--white);
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+            background: rgba(0,0,0,0.8);
+            transition: 0.1s;
+        }
+        .cyber-border:hover {
+            border-color: var(--red-orange);
+            background: rgba(255, 61, 0, 0.1);
         }
 
-        .nav-links {
-            display: flex;
-            list-style: none;
+        /* Machine Girl Style Glitch */
+        .text-break {
+            position: relative;
+            display: inline-block;
         }
-
-        .nav-links li {
-            margin-left: 2rem;
-        }
-
-        .nav-links a {
-            color: var(--white);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            transition: 0.3s;
-        }
-
-        .nav-links a:hover {
-            color: var(--accent);
-        }
-
-        /* Hero Section */
-        .hero {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1514525253344-f25091a92a7e?auto=format&fit=crop&q=80&w=1920'); /* Placeholder image */
-            background-size: cover;
-            background-position: center;
-        }
-
-        .hero h1 {
-            font-size: 6rem;
-            font-weight: 900;
-            text-transform: uppercase;
-            margin-bottom: 1rem;
-            letter-spacing: -2px;
-        }
-
-        .hero p {
-            font-size: 1.2rem;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            margin-bottom: 2rem;
-            color: var(--accent);
-        }
-
-        .btn {
-            padding: 1rem 2.5rem;
-            background: var(--accent);
-            color: var(--white);
-            text-decoration: none;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            transition: 0.3s;
-            border: 2px solid var(--accent);
-        }
-
-        .btn:hover {
-            background: transparent;
-            color: var(--accent);
-        }
-
-        /* Music Section */
-        .section {
-            padding: 100px 10%;
-        }
-
-        .section-title {
-            font-size: 2.5rem;
-            margin-bottom: 3rem;
-            text-transform: uppercase;
-            border-left: 5px solid var(--accent);
-            padding-left: 20px;
-        }
-
-        .music-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-
-        .track-card {
-            background: var(--gray);
-            padding: 20px;
-            border-radius: 4px;
-            transition: 0.3s;
-            border-bottom: 0px solid var(--accent);
-        }
-
-        .track-card:hover {
-            transform: translateY(-10px);
-            border-bottom: 4px solid var(--accent);
-        }
-
-        .track-img {
-            width: 100%;
-            aspect-ratio: 1;
-            background: #333;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Footer */
-        footer {
-            padding: 50px 10%;
-            text-align: center;
+        .text-break:hover::after {
+            content: attr(data-text);
+            position: absolute;
+            left: 2px;
+            text-shadow: -1px 0 red;
+            top: 0;
+            color: white;
             background: var(--black);
-            border-top: 1px solid #222;
+            overflow: hidden;
+            clip: rect(0, 900px, 0, 0);
+            animation: noise-anim 2s infinite linear alternate-reverse;
         }
 
-        .social-links {
-            margin-bottom: 20px;
+        @keyframes noise-anim {
+            0% { clip: rect(12px, 9999px, 94px, 0); }
+            100% { clip: rect(44px, 9999px, 12px, 0); }
         }
 
-        .social-links a {
-            color: var(--white);
-            font-size: 1.5rem;
-            margin: 0 15px;
-            transition: 0.3s;
+        .noise-svg {
+            filter: contrast(150%) brightness(1000%);
+            mix-blend-mode: overlay;
         }
 
-        .social-links a:hover {
-            color: var(--accent);
+        .marquee-container {
+            background: var(--white);
+            transform: rotate(-1deg);
+            margin-top: -20px;
         }
 
-        @media (max-width: 768px) {
-            .hero h1 { font-size: 3.5rem; }
-            .nav-links { display: none; }
+        /* Audio Visualizer Mimic */
+        .vis-bar {
+            width: 4px;
+            background: var(--red-orange);
+            margin: 0 1px;
+            height: 10px;
+            transition: height 0.05s ease;
+        }
+
+        /* Custom Cursor */
+        body {
+            cursor: crosshair;
+            animation: flicker 0.15s infinite;
+        }
+        
+        a, button, .cursor-pointer {
+            cursor: crosshair !important;
         }
     </style>
 </head>
-<body>
+<body class="selection:bg-[#FF3D00] selection:text-white">
+    <div class="scanline"></div>
 
-    <nav>
-        <a href="#" class="logo">WIUT<span>CHI</span></a>
-        <ul class="nav-links">
-            <li><a href="#music">Music</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#contact">Contact</a></li>
-        </ul>
+    <!-- Navigation (Minimalist top bar) -->
+    <nav class="fixed top-0 w-full z-50 px-4 py-4 flex justify-between items-center bg-black/80 border-b border-white/10 backdrop-blur-md">
+        <div class="heading text-xl flex items-center gap-2">
+            <span class="bg-[#FF3D00] text-black px-1 font-black">WIU</span>
+            <span>TCHI</span>
+        </div>
+        <div class="flex items-center gap-8">
+            <div id="visualizer" class="flex items-end h-4">
+                <div class="vis-bar"></div><div class="vis-bar"></div><div class="vis-bar"></div><div class="vis-bar"></div>
+            </div>
+            <button id="audio-toggle" class="text-[10px] tracking-widest font-bold">
+                [ SIGNAL: <span id="audio-status" class="text-red-600">MUTED</span> ]
+            </button>
+        </div>
     </nav>
 
-    <section class="hero">
-        <p>New Sound Emerging</p>
-        <h1>WIUTCHI</h1>
-        <a href="#music" class="btn">Stream Now</a>
-    </section>
+    <!-- Main Content -->
+    <main class="relative pt-32 px-4 md:px-12">
+        
+        <!-- Hero: Machine Girl chaotic typography -->
+        <section class="mb-32 relative mt-16">
+            <div class="absolute -top-10 -left-10 opacity-20 pointer-events-none select-none">
+                <p class="text-[15rem] font-black leading-none text-[#FF3D00] animate-pulse">01</p>
+            </div>
+            
+            <div class="relative z-10">
+                <p class="text-[#FF3D00] font-bold mb-2 flex items-center gap-2">
+                    <span class="w-2 h-2 bg-[#FF3D00] inline-block animate-ping"></span>
+                    / SYSTEM_OVERRIDE_PROTOCOL_ENABLED
+                </p>
+                <h1 id="hero-title" class="heading text-[clamp(3.5rem,12vw,10rem)] leading-[0.85] uppercase text-break italic" data-text="SOUND ARCHITECT">
+                    SOUND<br>ARCHITECT
+                </h1>
+                
+                <div class="mt-8 flex flex-col md:flex-row gap-8 items-start">
+                    <div class="cyber-border p-6 max-w-sm relative">
+                        <div class="absolute top-0 right-0 bg-[#FF3D00] text-black text-[8px] font-black px-2 py-0.5 tracking-widest">WARNING</div>
+                        <p class="text-xs leading-relaxed opacity-70 mt-2">
+                            Digital fragmentation as a lifestyle. Wiutchi synthesizes industrial noise, breakcore percussion, and atmospheric, haunting textures into a singular assault on the senses.
+                        </p>
+                    </div>
+                    <div class="flex flex-col gap-2 uppercase font-bold text-[10px] tracking-[0.3em]">
+                        <a href="#music" class="hover:text-[#FF3D00] border-l-2 border-transparent hover:border-[#FF3D00] pl-4 transition-all">01_STORAGE_AUDIO</a>
+                        <a href="#" class="hover:text-[#FF3D00] border-l-2 border-transparent hover:border-[#FF3D00] pl-4 transition-all">02_VISUAL_DECAY</a>
+                        <a href="#" class="hover:text-[#FF3D00] border-l-2 border-transparent hover:border-[#FF3D00] pl-4 transition-all">03_CONNECT_SIGNAL</a>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-    <section id="music" class="section">
-        <h2 class="section-title">Latest Releases</h2>
-        <div class="music-grid">
-            <div class="track-card">
-                <div class="track-img"><i class="fas fa-compact-disc fa-4x" style="color: var(--accent)"></i></div>
-                <h3>Track Name One</h3>
-                <p style="color: #888;">Single • 2026</p>
+        <!-- Dynamic Marquee (Breakcore speed) -->
+        <div class="marquee-container py-2 overflow-hidden flex -mx-12 mb-32 border-y-4 border-black">
+            <div class="marquee whitespace-nowrap flex animate-[scroll_5s_linear_infinite] font-black text-black text-4xl italic">
+                DIGITAL DECAY // BREAKER // SYSTEM_FAIL // WIUTCHI // DIGITAL DECAY // BREAKER // SYSTEM_FAIL // WIUTCHI //&nbsp;
             </div>
-            <div class="track-card">
-                <div class="track-img"><i class="fas fa-compact-disc fa-4x" style="color: var(--accent)"></i></div>
-                <h3>Track Name Two</h3>
-                <p style="color: #888;">EP • 2026</p>
-            </div>
-            <div class="track-card">
-                <div class="track-img"><i class="fas fa-compact-disc fa-4x" style="color: var(--accent)"></i></div>
-                <h3>Track Name Three</h3>
-                <p style="color: #888;">Single • 2025</p>
+            <div class="marquee whitespace-nowrap flex animate-[scroll_5s_linear_infinite] font-black text-black text-4xl italic">
+                DIGITAL DECAY // BREAKER // SYSTEM_FAIL // WIUTCHI // DIGITAL DECAY // BREAKER // SYSTEM_FAIL // WIUTCHI //&nbsp;
             </div>
         </div>
-    </section>
 
-    <section id="about" class="section" style="background-color: var(--gray);">
-        <h2 class="section-title">The Vision</h2>
-        <p style="max-width: 800px; font-size: 1.2rem; color: #ccc;">
-            Wiutchi is a multi-dimensional producer and artist pushing the boundaries of electronic and melodic soundscapes. 
-            By blending raw industrial energy with orange-hued warmth, Wiutchi creates an immersive auditory experience 
-            that defines the new era of underground music.
-        </p>
-    </section>
+        <!-- Music Section -->
+        <section id="music" class="grid grid-cols-1 md:grid-cols-12 gap-8 mb-40">
+            <div class="md:col-span-4">
+                <div class="sticky top-24">
+                    <h2 class="heading text-5xl mb-4 text-[#FF3D00] flex items-center gap-3">DISCO<span class="w-5 h-10 bg-white animate-pulse block"></span></h2>
+                    <p class="text-xs opacity-50 mb-8 font-bold tracking-widest bg-[#FF3D00] text-black inline-block px-2 py-1">UNIT_DATA_EXTRACTED</p>
+                    <div class="w-full h-[1px] bg-white/20 mb-8"></div>
+                    <p class="text-sm italic">"The sound of a machine breaking in a quiet room."</p>
+                </div>
+            </div>
 
-    <footer>
-        <div class="social-links">
-            <a href="#"><i class="fab fa-spotify"></i></a>
-            <a href="#"><i class="fab fa-soundcloud"></i></a>
-            <a href="#"><i class="fab fa-instagram"></i></a>
-            <a href="#"><i class="fab fa-youtube"></i></a>
+            <div class="md:col-span-8 space-y-4">
+                <!-- Entry 1 -->
+                <div class="cyber-border group p-4 flex items-center gap-6 cursor-pointer overflow-hidden relative">
+                    <div class="w-20 h-20 bg-[#FF3D00] flex-shrink-0 flex items-center justify-center font-black text-2xl group-hover:scale-110 transition-transform">X</div>
+                    <div>
+                        <h3 class="heading text-2xl group-hover:text-[#FF3D00]">STRESS_TEST.wav</h3>
+                        <p class="text-[10px] opacity-40 uppercase">BPM: 195 // 2026 // BREAKCORE</p>
+                    </div>
+                    <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity pr-4 font-black">PLAY_</div>
+                </div>
+
+                <!-- Entry 2 -->
+                <div class="cyber-border group p-4 flex items-center gap-6 cursor-pointer overflow-hidden relative">
+                    <div class="w-20 h-20 bg-white text-black flex-shrink-0 flex items-center justify-center font-black text-2xl group-hover:bg-[#FF3D00] transition-colors">Y</div>
+                    <div>
+                        <h3 class="heading text-2xl group-hover:text-[#FF3D00]">GHOST_IN_THE_ROOM</h3>
+                        <p class="text-[10px] opacity-40 uppercase">BPM: 140 // 2026 // AMBIENT_GRIND</p>
+                    </div>
+                    <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity pr-4 font-black">PLAY_</div>
+                </div>
+
+                <!-- Entry 3 -->
+                <div class="cyber-border group p-4 flex items-center gap-6 cursor-pointer overflow-hidden relative">
+                    <div class="w-20 h-20 bg-black border border-white flex-shrink-0 flex items-center justify-center font-black text-2xl group-hover:border-[#FF3D00] group-hover:text-[#FF3D00] transition-colors">Z</div>
+                    <div>
+                        <h3 class="heading text-2xl group-hover:text-[#FF3D00]">CRASH_BY_DESIGN</h3>
+                        <p class="text-[10px] opacity-40 uppercase">BPM: 220 // 2025 // SPEEDCORE</p>
+                    </div>
+                    <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity pr-4 font-black">PLAY_</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Newsletter (The 'Signal') -->
+        <section class="max-w-4xl mx-auto mb-40 text-center">
+            <div class="bg-[#FF3D00] text-black p-12 relative overflow-hidden">
+                <div class="absolute top-0 left-0 text-[10rem] opacity-10 font-black pointer-events-none select-none italic">SIGNAL</div>
+                <h2 class="heading text-6xl mb-6 relative z-10">GET THE DATA</h2>
+                <p class="mb-8 font-bold tracking-widest relative z-10">UNRELEASED BREAKS / PATCHES / LIVE NODES</p>
+                <div class="flex flex-col md:flex-row gap-0 border-4 border-black relative z-10">
+                    <input type="email" placeholder="YOUR_EMAIL@NODE.COM" class="flex-grow p-4 bg-transparent border-none placeholder:text-black/50 text-black font-black uppercase focus:outline-none">
+                    <button class="bg-black text-white p-4 px-12 font-black hover:bg-white hover:text-black transition-colors uppercase">Initialize</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="p-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] opacity-50 font-bold uppercase tracking-widest">
+        <div>© 2026_WIUTCHI // POWERED_BY_NOISE</div>
+        <div class="flex gap-8">
+            <a href="#" class="hover:text-[#FF3D00]">Instagram</a>
+            <a href="#" class="hover:text-[#FF3D00]">Soundcloud</a>
+            <a href="#" class="hover:text-[#FF3D00]">Spotify</a>
         </div>
-        <p>&copy; 2026 WIUTCHI. Designed for the Future.</p>
+        <div>STAY_ONLINE_STAY_BROKEN</div>
     </footer>
 
+    <script>
+        // 1. IMPROVED AUDIO ENGINE (Breakcore/Overdrive focused)
+        let audioCtx;
+        let oscillator, subOsc, gainNode, distortionNode, filterNode, bitcrushNode;
+        let isAudioStarted = false;
+
+        function makeDistortionCurve(amount) {
+            const n_samples = 44100;
+            const curve = new Float32Array(n_samples);
+            for (let i = 0; i < n_samples; ++i) {
+                const x = (i * 2) / n_samples - 1;
+                // High-gain asymmetrical distortion
+                curve[i] = ((3 + amount) * x * 20 * (Math.PI / 180)) / (Math.PI + amount * Math.abs(x));
+            }
+            return curve;
+        }
+
+        async function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            if (isAudioStarted) {
+                audioCtx.suspend();
+                document.getElementById('audio-status').innerText = "MUTED";
+                document.getElementById('audio-status').className = "text-red-600";
+                isAudioStarted = false;
+                return;
+            }
+
+            await audioCtx.resume();
+
+            oscillator = audioCtx.createOscillator();
+            subOsc = audioCtx.createOscillator();
+            gainNode = audioCtx.createGain();
+            distortionNode = audioCtx.createWaveShaper();
+            filterNode = audioCtx.createBiquadFilter();
+
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(50, audioCtx.currentTime); 
+            
+            subOsc.type = 'sine';
+            subOsc.frequency.setValueAtTime(45, audioCtx.currentTime);
+
+            filterNode.type = 'lowpass';
+            filterNode.frequency.setValueAtTime(300, audioCtx.currentTime);
+            filterNode.Q.setValueAtTime(10, audioCtx.currentTime);
+
+            distortionNode.curve = makeDistortionCurve(10);
+            
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.5);
+
+            oscillator.connect(distortionNode);
+            subOsc.connect(distortionNode);
+            distortionNode.connect(filterNode);
+            filterNode.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.start();
+            subOsc.start();
+            
+            document.getElementById('audio-status').innerText = "LIVE";
+            document.getElementById('audio-status').className = "text-green-500 animate-pulse";
+            isAudioStarted = true;
+            animateVisualizer();
+        }
+
+        document.getElementById('audio-toggle').addEventListener('click', initAudio);
+
+        // 2. BREAKCORE OVERDRIVE INTERACTION
+        const heroTitle = document.getElementById('hero-title');
+        
+        heroTitle.addEventListener('mouseenter', () => {
+            if (!isAudioStarted) return;
+            const now = audioCtx.currentTime;
+            distortionNode.curve = makeDistortionCurve(600); // Intense crunch
+            filterNode.frequency.exponentialRampToValueAtTime(8000, now + 0.1); // Open screaming filter
+            oscillator.frequency.exponentialRampToValueAtTime(70, now + 0.1); // Pitch slide up
+        });
+
+        heroTitle.addEventListener('mouseleave', () => {
+            if (!isAudioStarted) return;
+            const now = audioCtx.currentTime;
+            distortionNode.curve = makeDistortionCurve(10);
+            filterNode.frequency.exponentialRampToValueAtTime(300, now + 0.4);
+            oscillator.frequency.exponentialRampToValueAtTime(50, now + 0.4);
+        });
+
+        // 3. VISUALIZER SYNC
+        function animateVisualizer() {
+            if (!isAudioStarted) return;
+            const bars = document.querySelectorAll('.vis-bar');
+            bars.forEach(bar => {
+                const h = Math.random() * 20 + 2;
+                bar.style.height = `${h}px`;
+            });
+            setTimeout(animateVisualizer, 80);
+        }
+
+        // 4. MOUSE PARALLAX (Subtle visual distortion aesthetic)
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 20;
+            const y = (e.clientY / window.innerHeight - 0.5) * 20;
+            heroTitle.style.transform = `translateX(${x}px) translateY(${y}px) skewX(${x/2}deg)`;
+        });
+    </script>
 </body>
 </html>
