@@ -63,6 +63,35 @@
             100% { transform: perspective(300px) rotateX(80deg) translateY(40px); }
         }
 
+        /* Red Eye (Signalis / Void) */
+        .red-eye {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40vw;
+            height: 40vw;
+            max-width: 600px;
+            max-height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,61,0,0.6) 0%, rgba(255,61,0,0) 60%);
+            filter: blur(40px);
+            opacity: 0.15;
+            z-index: 0;
+            pointer-events: none;
+            animation: pulse-eye 4s infinite alternate ease-in-out;
+            transition: transform 1s ease, opacity 1s ease;
+        }
+        @keyframes pulse-eye {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.15; }
+            100% { transform: translate(-50%, -50%) scale(1.05); opacity: 0.25; }
+        }
+        .red-eye.active {
+            opacity: 0.5;
+            transform: translate(-50%, -50%) scale(1.2);
+            filter: blur(20px);
+        }
+
         /* Scanning Line Effect */
         body::before {
             content: " ";
@@ -308,7 +337,8 @@
     <!-- Subliminal Layer -->
     <div id="subliminal">WAKE UP</div>
 
-    <!-- Perspective Background Grid -->
+    <!-- Perspective Background Grid & Red Eye -->
+    <div class="red-eye" id="void-eye"></div>
     <div class="perspective-grid"></div>
 
     <!-- Live Terminal / Interactive CLI -->
@@ -528,8 +558,8 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 font-mono text-xs md:text-sm relative z-10">
                     <div>
                         <p class="font-bold border border-black p-1 inline-block mb-2 uppercase bg-black text-[#FF3D00]">ENTRY: 9942 // DEGRADATION</p>
-                        <p class="text-justify leading-relaxed font-bold">
-                            The separation of consciousness and the <span class="bg-black text-[#FF3D00] px-1">digital vessel</span> has caused severe frequency degradation. 210 BPM is the minimum required speed to maintain structural integrity of the Replika units. Do not let the RPM fall. If SYNC drops below 50%, the Wired will consume the host.
+                        <p id="decrypt-target" class="text-justify leading-relaxed font-bold cursor-crosshair min-h-[100px]" data-original="The separation of consciousness and the digital vessel has caused severe frequency degradation. 210 BPM is the minimum required speed to maintain structural integrity of the Replika units. Do not let the RPM fall. If SYNC drops below 50%, the Wired will consume the host.">
+                            [ENCRYPTED_DATA_BLOCK] // HOVER_TO_DECRYPT
                         </p>
                     </div>
                     <div class="border-l-4 border-black pl-4">
@@ -599,7 +629,7 @@
                 
                 switch(val) {
                     case 'HELP':
-                        logToTerminal("CMDS: REBOOT, STATUS, WAKE, DIR");
+                        logToTerminal("CMDS: REBOOT, STATUS, WAKE, DIR, CLEAR");
                         break;
                     case 'REBOOT':
                         currentSync = 100;
@@ -617,6 +647,24 @@
                         break;
                     case 'DIR':
                         logToTerminal("NO FILES FOUND. ONLY ROT.");
+                        break;
+                    case 'CLEAR':
+                        logContainer.innerHTML = '';
+                        break;
+                    // EASTER EGGS
+                    case 'LAIN':
+                        logToTerminal("LET'S ALL LOVE LAIN.");
+                        triggerSubliminal(true);
+                        break;
+                    case 'AE86':
+                        logToTerminal("DOWNHILL SPECIALIST ENGAGED.");
+                        revEngine(120, 6, 800, 8000);
+                        setTimeout(idleEngine, 3000);
+                        break;
+                    case 'YORHA':
+                        logToTerminal("GLORY TO MANKIND.");
+                        currentSync -= 50;
+                        playUIBeep(400, 'sawtooth');
                         break;
                     default:
                         logToTerminal("ERR: UNKNOWN COMMAND");
@@ -813,6 +861,33 @@
                     revEngine(trpm, freqMult, 300, 2000 + (trpm * 20));
                 });
                 card.addEventListener('mouseleave', idleEngine);
+                
+                // Track Click Loading Logic
+                card.addEventListener('click', () => {
+                    // Reset all
+                    document.querySelectorAll('.track-card').forEach(c => {
+                        c.style.borderColor = '';
+                        c.querySelector('.retro-os-header').style.backgroundColor = '';
+                        c.querySelector('.retro-os-header').style.color = '';
+                    });
+                    
+                    // Highlight selected
+                    card.style.borderColor = 'var(--red-orange)';
+                    const header = card.querySelector('.retro-os-header');
+                    header.style.backgroundColor = 'var(--red-orange)';
+                    header.style.color = 'var(--black)';
+                    
+                    // Shift base audio freq permanently based on track
+                    if (audioCtx && audioCtx.state === 'running') {
+                        const baseFreq = 30 + (parseInt(card.dataset.rpm) / 4);
+                        oscillator.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+                        subOsc.frequency.setValueAtTime(baseFreq / 2, audioCtx.currentTime);
+                    }
+                    
+                    const trackName = card.querySelector('.text-break').dataset.text;
+                    logToTerminal(`>>> LOADED: ${trackName}`);
+                    playUIBeep(2000, 'sine');
+                });
             }
 
             // 3D Hover Effect
@@ -852,6 +927,14 @@
             const rpmBar = document.getElementById('rpm-bar');
             rpmBar.style.width = `${Math.min(100, displayRPM)}%`;
             rpmBar.style.backgroundColor = displayRPM > 80 ? 'var(--red-orange)' : 'var(--white)';
+
+            // Red Eye Reaction
+            const redEye = document.getElementById('void-eye');
+            if (displayRPM > 80) {
+                redEye.classList.add('active');
+            } else {
+                redEye.classList.remove('active');
+            }
 
             // BREAKCORE STUTTER EFFECT (When Redlining)
             if (displayRPM > 80 && audioCtx.state === 'running') {
@@ -959,6 +1042,37 @@
                 setTimeout(() => ghost.remove(), 500); // Remove after animation
             }
         });
+
+        // 8. DATA DECRYPTION EFFECT (Gestalt Lore)
+        const decryptTarget = document.getElementById('decrypt-target');
+        const originalText = decryptTarget.dataset.original;
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*!';
+        let decryptInterval = null;
+
+        decryptTarget.addEventListener('mouseenter', () => {
+            if (decryptTarget.dataset.decrypted === "true") return;
+            playUIBeep(1500, 'triangle');
+            
+            let iterations = 0;
+            clearInterval(decryptInterval);
+            
+            decryptInterval = setInterval(() => {
+                decryptTarget.innerText = originalText.split('').map((char, index) => {
+                    if (index < iterations) return char;
+                    if (char === ' ') return ' ';
+                    return chars[Math.floor(Math.random() * chars.length)];
+                }).join('');
+                
+                iterations += 1.5;
+                if (iterations >= originalText.length) {
+                    clearInterval(decryptInterval);
+                    decryptTarget.innerText = originalText;
+                    decryptTarget.dataset.decrypted = "true";
+                    logToTerminal("DECRYPTION COMPLETE");
+                }
+            }, 30);
+        });
+
     </script>
 </body>
 </html>
