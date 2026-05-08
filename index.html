@@ -14,6 +14,9 @@
             --black: #050505;
             --white: #F5F5F5;
             --glitch-speed: 0.15s;
+            --warp-x: 0deg;
+            --warp-y: 80deg;
+            --warp-z: 0deg;
         }
 
         body {
@@ -62,18 +65,20 @@
                 linear-gradient(var(--red-orange) 1px, transparent 1px),
                 linear-gradient(90deg, var(--red-orange) 1px, transparent 1px);
             background-size: 60px 40px;
-            transform: perspective(300px) rotateX(80deg);
+            /* Dynamic Warping Variables */
+            transform: perspective(300px) rotateX(var(--warp-y)) rotateY(var(--warp-x)) rotateZ(var(--warp-z));
             animation: moveGrid 0.8s linear infinite;
             opacity: 0.15;
             z-index: 0;
             pointer-events: none;
             mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 60%);
             -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 60%);
+            transition: transform 0.1s ease-out;
         }
 
         @keyframes moveGrid {
-            0% { transform: perspective(300px) rotateX(80deg) translateY(0); }
-            100% { transform: perspective(300px) rotateX(80deg) translateY(40px); }
+            0% { background-position: 0 0; }
+            100% { background-position: 0 40px; }
         }
 
         /* Red Eye (Signalis / Void) */
@@ -459,7 +464,7 @@
 
     <!-- Perspective Background Grid & Red Eye -->
     <div class="red-eye" id="void-eye"></div>
-    <div class="perspective-grid"></div>
+    <div class="perspective-grid" id="warp-grid"></div>
 
     <!-- Authentic CRT Glass Overlay -->
     <div class="crt-overlay"></div>
@@ -486,9 +491,11 @@
         <div class="window-body p-3 flex flex-col h-48">
             <canvas id="oscilloscope" width="300" height="40" class="mb-2 border border-[#FF3D00]/20 w-full opacity-80 bg-black rounded-sm shrink-0"></canvas>
             <div id="terminal-log" class="flex flex-col justify-end overflow-hidden mb-2 h-full"></div>
-            <div class="flex items-center gap-2 border-t border-[#FF3D00]/30 pt-2 mt-auto shrink-0">
+            <div class="flex items-center gap-2 border-t border-[#FF3D00]/30 pt-2 mt-auto shrink-0 relative">
                 <span class="animate-pulse">></span>
                 <input id="cmd-input" type="text" class="bg-transparent border-none outline-none text-white w-full placeholder:text-[#FF3D00]/40 font-black" placeholder="AWAITING COMMAND..." autocomplete="off">
+                <!-- Glitch overlay for input -->
+                <div id="cmd-glitch-overlay" class="absolute top-2 left-4 text-white opacity-50 pointer-events-none tracking-widest"></div>
             </div>
         </div>
     </div>
@@ -536,6 +543,11 @@
             
             <!-- Dynamic BIOS Boot Logs -->
             <div id="boot-logs" class="text-left font-mono text-xs text-white opacity-80 h-24 overflow-hidden mb-4 flex flex-col justify-end"></div>
+
+            <!-- Persistent Memory Badge -->
+            <div id="memory-badge" class="hidden border border-white text-white bg-black/50 px-2 py-1 text-[8px] mb-4 mx-auto w-max tracking-widest">
+                PRIOR_SESSION_CRASH_DETECTED
+            </div>
 
             <p id="boot-pulse" class="text-[#FF3D00] text-xs mb-8 animate-pulse opacity-0">AWAITING_USER_INPUT</p>
             <button id="boot-btn" class="bg-[#FF3D00] text-black font-black px-8 py-3 w-full hover:bg-white transition-colors tracking-widest interactive-element opacity-0 pointer-events-none" data-log="ESTABLISHING CONNECTION TO THE WIRED...">CONNECT TO THE WIRED [KLICKEN]</button>
@@ -785,6 +797,11 @@
     </div> <!-- End main-wrapper -->
 
     <script>
+        // --- PERSISTENT LORE MEMORY (Cookies / LocalStorage) ---
+        if (localStorage.getItem('wiutchi_crashed') === 'true') {
+            document.getElementById('memory-badge').classList.remove('hidden');
+        }
+
         // --- SPEECH SYNTHESIS (GHOST VOICE) ---
         function speakVoice(text, pitch = 0.2, rate = 0.7) {
             if ('speechSynthesis' in window && isAudioStarted && !isCrashed) {
@@ -863,7 +880,6 @@
             if(btnClose) btnClose.addEventListener('click', () => windowEl.style.display = 'none');
         });
 
-
         // 2. TERMINAL LOG SYSTEM
         const logContainer = document.getElementById('terminal-log');
 
@@ -878,9 +894,19 @@
             }
         }
 
-        // TERMINAL COMMAND INTERFACE
+        // TERMINAL COMMAND INTERFACE & INPUT CORRUPTION
         const cmdInput = document.getElementById('cmd-input');
         let isDriving = false;
+
+        // Terminal Input Glitch/Corruption Effect
+        cmdInput.addEventListener('input', (e) => {
+            if (currentSync < 45 && Math.random() > 0.7) {
+                const glitchChars = ['#', '@', '%', '&', '*', '!', '?'];
+                const rc = glitchChars[Math.floor(Math.random() * glitchChars.length)];
+                e.target.value = e.target.value.slice(0, -1) + rc;
+                playUIBeep(200, 'sawtooth');
+            }
+        });
 
         cmdInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -892,7 +918,7 @@
                 
                 switch(val) {
                     case 'HELP':
-                        logToTerminal("CMDS: REBOOT, STATUS, WAKE, DRIVE, STOP, RADAR, OPTICS, SOMA");
+                        logToTerminal("CMDS: REBOOT, STATUS, WAKE, DRIVE, STOP, ABORT, RADAR, OPTICS, SOMA");
                         break;
                     case 'REBOOT':
                         currentSync = 100;
@@ -922,6 +948,29 @@
                     case 'CLEAR':
                         logContainer.innerHTML = '';
                         break;
+                    
+                    // TAPE STOP ABORT MECHANIC
+                    case 'ABORT':
+                    case 'HALT':
+                        logToTerminal("EMERGENCY ABORT SEQUENCE INITIATED.");
+                        isDriving = false;
+                        document.body.classList.remove('drive-mode', 'awakened-mode', 'soma-mode');
+                        document.getElementById('main-wrapper').classList.add('kick-glitch');
+                        
+                        if(audioCtx && audioCtx.state === 'running') {
+                            const now = audioCtx.currentTime;
+                            // Pitch down to 0 super fast
+                            oscillator.frequency.exponentialRampToValueAtTime(0.01, now + 1.5);
+                            subOsc.frequency.exponentialRampToValueAtTime(0.01, now + 1.5);
+                            filterNode.frequency.exponentialRampToValueAtTime(10, now + 1.5);
+                        }
+                        
+                        setTimeout(() => {
+                            document.getElementById('main-wrapper').classList.remove('kick-glitch');
+                            idleEngine();
+                        }, 1500);
+                        break;
+
                     // LORE OVERRIDES
                     case 'SOMA':
                         logToTerminal("MELANCHOLIC PROTOCOL ACTIVATED.");
@@ -1696,6 +1745,10 @@
         function triggerKernelPanic() {
             if (isCrashed) return;
             isCrashed = true;
+            
+            // Set persistence flag so the ghost remembers you crashed next time you boot
+            localStorage.setItem('wiutchi_crashed', 'true');
+
             document.getElementById('main-wrapper').style.display = 'none';
             document.getElementById('kernel-panic').style.display = 'flex';
             document.body.className = ''; 
@@ -1741,6 +1794,22 @@
             const rpmBar = document.getElementById('rpm-bar');
             rpmBar.style.width = `${Math.min(100, displayRPM)}%`;
             rpmBar.style.backgroundColor = displayRPM > 80 ? 'var(--red-orange)' : 'var(--white)';
+
+            // Dynamically warp the perspective grid based on Sync and RPM
+            if (!document.body.classList.contains('soma-mode')) {
+                const warpGrid = document.getElementById('warp-grid');
+                const warpIntensity = (100 - currentSync) * 0.05;
+                const rpmIntensity = (currentRPM / 100);
+                // Math.sin provides a waving effect over time
+                const timeFactor = Date.now() / 500;
+                
+                const newSkewX = Math.sin(timeFactor) * warpIntensity;
+                const newRotateZ = Math.cos(timeFactor * 1.5) * (warpIntensity + (rpmIntensity * 5));
+                
+                // Update CSS variables directly for smooth transform interpolation
+                document.documentElement.style.setProperty('--warp-x', `${newSkewX}deg`);
+                document.documentElement.style.setProperty('--warp-z', `${newRotateZ}deg`);
+            }
 
             const redEye = document.getElementById('void-eye');
             if (displayRPM > 80 && !document.body.classList.contains('soma-mode')) redEye.classList.add('active');
