@@ -630,7 +630,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <!-- Track 1 -->
-                    <div class="retro-os-panel group cursor-pointer interactive-element track-card" data-rpm="95" data-log="LOADING [TOUGE_DRIFT_2B] // RPM: 210BPM (SPEEDCORE)">
+                    <div class="retro-os-panel group cursor-pointer interactive-element track-card" data-rpm="95" data-theme="#FF3D00" data-log="LOADING [TOUGE_DRIFT_2B] // RPM: 210BPM (SPEEDCORE)">
                         <div class="retro-os-header"><span>TRACK_01.wav</span><span>[ID: AE86]</span></div>
                         <div class="p-4 bg-black group-hover:bg-[#FF3D00] group-hover:text-black transition-colors h-full flex flex-col justify-between">
                             <div>
@@ -649,7 +649,7 @@
                     </div>
 
                     <!-- Track 2 -->
-                    <div class="retro-os-panel group cursor-pointer interactive-element track-card" data-rpm="40" data-log="LOADING [NAVI_GHOST] // RPM: 160BPM (D-HARDCORE)">
+                    <div class="retro-os-panel group cursor-pointer interactive-element track-card" data-rpm="40" data-theme="#00FFFF" data-log="LOADING [NAVI_GHOST] // RPM: 160BPM (D-HARDCORE)">
                         <div class="retro-os-header"><span>TRACK_02.wav</span><span>[ID: LAIN]</span></div>
                         <div class="p-4 bg-black group-hover:bg-white group-hover:text-black transition-colors h-full flex flex-col justify-between">
                             <div>
@@ -668,7 +668,7 @@
                     </div>
 
                     <!-- Track 3 -->
-                    <div class="retro-os-panel group cursor-pointer interactive-element track-card border-[#FF3D00]" data-rpm="80" data-log="WARNING: CORRUPTED DATA_ [REPLIKA_TEARS] // SYNC DROP">
+                    <div class="retro-os-panel group cursor-pointer interactive-element track-card border-[#FF3D00]" data-rpm="80" data-theme="#FF0000" data-log="WARNING: CORRUPTED DATA_ [REPLIKA_TEARS] // SYNC DROP">
                         <div class="retro-os-header bg-[#FF3D00] text-black"><span>CORRUPTED_FILE.exe</span><span>[ID: YORHA]</span></div>
                         <div class="p-4 bg-black text-[#FF3D00] h-full flex flex-col justify-between">
                             <div>
@@ -687,7 +687,7 @@
                     </div>
                     
                     <!-- Track 4 -->
-                    <div class="retro-os-panel group cursor-pointer interactive-element track-card" data-rpm="70" data-log="LOADING [POP_UP_HEADLIGHTS] // RPM: 185BPM (GLITCHCORE)">
+                    <div class="retro-os-panel group cursor-pointer interactive-element track-card" data-rpm="70" data-theme="#FF00FF" data-log="LOADING [POP_UP_HEADLIGHTS] // RPM: 185BPM (GLITCHCORE)">
                         <div class="retro-os-header"><span>TRACK_04.wav</span><span>[ID: MIATA]</span></div>
                         <div class="p-4 bg-black group-hover:bg-[#FF3D00] group-hover:text-black transition-colors h-full flex flex-col justify-between">
                             <div>
@@ -739,10 +739,14 @@
                     <div class="absolute top-0 left-0 text-[10rem] opacity-10 font-black pointer-events-none select-none italic">SIGNAL</div>
                     <h2 class="heading text-6xl mb-6 relative z-10">GET THE DATA</h2>
                     <p class="mb-8 font-bold tracking-widest relative z-10">UNRELEASED BREAKS / PATCHES / LIVE NODES</p>
-                    <div class="flex flex-col md:flex-row gap-0 border-4 border-black relative z-10 shadow-[8px_8px_0_rgba(0,0,0,1)]">
-                        <input type="email" placeholder="YOUR_EMAIL@NODE.COM" class="flex-grow p-4 bg-transparent border-none placeholder:text-black/50 text-black font-black uppercase focus:outline-none">
-                        <button class="bg-black text-white p-4 px-12 font-black hover:bg-white hover:text-black transition-colors uppercase interactive-element" data-log="TRANSMITTING... ERROR: ENDPOINT REJECTED">Initialize</button>
-                    </div>
+                    
+                    <!-- WRAPPED IN A FORM TAG -->
+                    <form id="newsletter-form" class="flex flex-col md:flex-row gap-0 border-4 border-black relative z-10 shadow-[8px_8px_0_rgba(0,0,0,1)]">
+                        <input type="hidden" name="access_key" value="43faa865-a75c-44da-9be8-110e7e4edc1c">
+                        <input type="email" name="email" id="newsletter-email" required placeholder="YOUR_EMAIL@NODE.COM" class="flex-grow p-4 bg-transparent border-none placeholder:text-black/50 text-black font-black uppercase focus:outline-none">
+                        <button type="submit" id="newsletter-btn" class="bg-black text-white p-4 px-12 font-black hover:bg-white hover:text-black transition-colors uppercase interactive-element" data-log="PREPARING HANDSHAKE...">Initialize</button>
+                    </form>
+                    
                 </div>
             </section>
         </main>
@@ -773,11 +777,15 @@
                 zIndexCounter++;
                 windowEl.style.zIndex = zIndexCounter;
             });
+            windowEl.addEventListener('touchstart', () => {
+                zIndexCounter++;
+                windowEl.style.zIndex = zIndexCounter;
+            }, {passive: true});
 
-            dragHandle.addEventListener('mousedown', (e) => {
+            function startDrag(clientX, clientY) {
                 isDragging = true;
-                startX = e.clientX;
-                startY = e.clientY;
+                startX = clientX;
+                startY = clientY;
                 
                 const rect = windowEl.getBoundingClientRect();
                 windowEl.style.bottom = 'auto';
@@ -789,20 +797,32 @@
                 initialTop = rect.top;
                 
                 document.body.style.userSelect = 'none';
-            });
+            }
 
-            document.addEventListener('mousemove', (e) => {
+            dragHandle.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
+            dragHandle.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientX, e.touches[0].clientY), {passive: false});
+
+            function onDrag(clientX, clientY) {
                 if (!isDragging) return;
-                const dx = e.clientX - startX;
-                const dy = e.clientY - startY;
+                const dx = clientX - startX;
+                const dy = clientY - startY;
                 windowEl.style.left = (initialLeft + dx) + 'px';
                 windowEl.style.top = (initialTop + dy) + 'px';
-            });
+            }
 
-            document.addEventListener('mouseup', () => {
+            document.addEventListener('mousemove', (e) => onDrag(e.clientX, e.clientY));
+            document.addEventListener('touchmove', (e) => {
+                if (isDragging) e.preventDefault();
+                onDrag(e.touches[0].clientX, e.touches[0].clientY);
+            }, {passive: false});
+
+            function endDrag() {
                 isDragging = false;
                 document.body.style.userSelect = '';
-            });
+            }
+
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('touchend', endDrag);
 
             // Window Controls
             const btnMin = windowEl.querySelector('.win-min');
@@ -934,19 +954,29 @@
 
         document.querySelectorAll('.interactive-element').forEach(el => {
             el.addEventListener('mouseenter', (e) => {
+                // UI Beep
                 playUIBeep();
-                if (el.dataset.log) logToTerminal(el.dataset.log);
+                
+                // Print to terminal if data-log exists
+                if (el.dataset.log) {
+                    logToTerminal(el.dataset.log);
+                }
+
+                // Glitch text trigger if it has the text-break class inside
                 const glitchText = el.querySelector('.text-break');
                 if(glitchText) glitchText.classList.add('glitch-active');
             });
+
             el.addEventListener('mouseleave', (e) => {
                 const glitchText = el.querySelector('.text-break');
                 if(glitchText) glitchText.classList.remove('glitch-active');
             });
         });
-        // 4. AUDIO ENGINE (Drone + Breakcore Drums + Acid Synth + Void Delay)
+
+        // 4. AUDIO ENGINE (Drone + Breakcore Drums + Acid Synth + Void Delay + DJ Filter)
         let audioCtx;
         let oscillator, subOsc, masterGainNode, gainNode, distortionNode, filterNode;
+        let djFilterNode; // Manual user-controlled filter
         let lfo, lfoGain; 
         let bitcrusherNode; 
         let analyserNode; 
@@ -1012,6 +1042,11 @@
             filterNode.frequency.setValueAtTime(400, audioCtx.currentTime);
             filterNode.Q.setValueAtTime(5, audioCtx.currentTime);
 
+            djFilterNode = audioCtx.createBiquadFilter();
+            djFilterNode.type = 'lowpass';
+            djFilterNode.frequency.setValueAtTime(20000, audioCtx.currentTime); // Fully open default
+            djFilterNode.Q.setValueAtTime(1, audioCtx.currentTime);
+
             distortionNode.curve = makeDistortionCurve(50);
             bitcrusherNode.curve = makeBitCrushCurve(16); 
             
@@ -1045,7 +1080,8 @@
             subOsc.connect(distortionNode);
             distortionNode.connect(bitcrusherNode); 
             bitcrusherNode.connect(filterNode);
-            filterNode.connect(gainNode);
+            filterNode.connect(djFilterNode); // Insert Manual DJ Filter
+            djFilterNode.connect(gainNode);
             gainNode.connect(masterGainNode); 
             
             // Wet Signal Path (Delay Network)
@@ -1324,6 +1360,12 @@
                     header.style.backgroundColor = 'var(--red-orange)';
                     header.style.color = 'var(--black)';
                     
+                    // THEME SHIFT
+                    if(card.dataset.theme) {
+                        document.documentElement.style.setProperty('--red-orange', card.dataset.theme);
+                        logToTerminal(`SYSTEM COLOR OVERRIDE: ${card.dataset.theme}`);
+                    }
+                    
                     if (audioCtx && audioCtx.state === 'running') {
                         const baseFreq = 30 + (parseInt(card.dataset.rpm) / 4);
                         oscillator.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
@@ -1373,7 +1415,7 @@
             oscCtx.fillRect(0, 0, oscCanvas.width, oscCanvas.height);
 
             oscCtx.lineWidth = 1.5;
-            oscCtx.strokeStyle = isDriving ? '#00FFFF' : '#FF3D00'; 
+            oscCtx.strokeStyle = isDriving ? '#00FFFF' : 'var(--red-orange)'; 
             oscCtx.beginPath();
 
             const sliceWidth = oscCanvas.width * 1.0 / bufferLength;
@@ -1432,7 +1474,8 @@
             rCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
             rCtx.fillRect(0, 0, radarCanvas.width, radarCanvas.height);
 
-            rCtx.strokeStyle = 'rgba(255, 61, 0, 0.2)';
+            rCtx.strokeStyle = 'var(--red-orange)';
+            rCtx.globalAlpha = 0.2;
             rCtx.lineWidth = 1;
             rCtx.beginPath();
             rCtx.arc(cx, cy, radius, 0, Math.PI * 2);
@@ -1441,16 +1484,19 @@
             rCtx.moveTo(cx, 0); rCtx.lineTo(cx, radarCanvas.height);
             rCtx.moveTo(0, cy); rCtx.lineTo(radarCanvas.width, cy);
             rCtx.stroke();
+            rCtx.globalAlpha = 1.0;
 
             radarAngle += 0.05;
             const sweepX = cx + Math.cos(radarAngle) * radius;
             const sweepY = cy + Math.sin(radarAngle) * radius;
-            rCtx.strokeStyle = 'rgba(255, 61, 0, 0.8)';
+            rCtx.strokeStyle = 'var(--red-orange)';
+            rCtx.globalAlpha = 0.8;
             rCtx.lineWidth = 2;
             rCtx.beginPath();
             rCtx.moveTo(cx, cy);
             rCtx.lineTo(sweepX, sweepY);
             rCtx.stroke();
+            rCtx.globalAlpha = 1.0;
 
             // Spawn Anomalies
             if (currentSync < 70 && Math.random() > (currentSync / 100)) {
@@ -1486,17 +1532,53 @@
                     if(!a.punished) {
                         currentSync -= 2;
                         logToTerminal("WARNING: ANOMALY BREACH. SYNC -2%");
+                        a.punished = true;
                     }
                     anomalies.splice(i, 1);
                 }
             }
         }
 
-        // TESSERACT (OPTICS) RENDERER
+        // TESSERACT (OPTICS) RENDERER & DJ FILTER INTERACTION
         const tCanvas = document.getElementById('optics-canvas');
         const tCtx = tCanvas.getContext('2d');
         let angleOptics = 0;
-        let audioReactScale = 0; // Hooks into FFT data
+        let audioReactScale = 0; 
+        let isOpticsDragging = false;
+        let opticsLastY = 0;
+        let djFilterMultiplier = 1.0;
+
+        // Interactive DJ Filter Controls
+        tCanvas.addEventListener('mousedown', (e) => {
+            isOpticsDragging = true;
+            opticsLastY = e.clientY;
+            document.body.style.cursor = 'ns-resize';
+        });
+        window.addEventListener('mouseup', () => {
+            if (isOpticsDragging) {
+                isOpticsDragging = false;
+                document.body.style.cursor = '';
+                // Snap filter back open
+                if (audioCtx && djFilterNode) {
+                    djFilterNode.frequency.exponentialRampToValueAtTime(20000, audioCtx.currentTime + 0.5);
+                }
+            }
+        });
+        window.addEventListener('mousemove', (e) => {
+            if (!isOpticsDragging) return;
+            const deltaY = e.clientY - opticsLastY;
+            opticsLastY = e.clientY;
+            
+            // Manual rotation
+            angleOptics -= deltaY * 0.02; 
+            
+            // Manual DJ Filter
+            djFilterMultiplier = Math.max(0.01, Math.min(1.0, djFilterMultiplier - (deltaY * 0.01)));
+            if (audioCtx && djFilterNode) {
+                const newFreq = Math.max(100, 20000 * Math.pow(djFilterMultiplier, 3));
+                djFilterNode.frequency.setValueAtTime(newFreq, audioCtx.currentTime);
+            }
+        });
 
         // 8 vertices of a cube
         const cubeVertices = [
@@ -1664,7 +1746,7 @@
                 }
                 
                 // Degrade audio dynamically based on how low sync is
-                if (audioCtx.state === 'running') {
+                if (audioCtx && audioCtx.state === 'running') {
                     // Sync 50 = 8 bits, Sync 0 = 2 bits (maximum crush)
                     const crushBits = Math.max(2, Math.floor((currentSync / 50) * 8));
                     bitcrusherNode.curve = makeBitCrushCurve(crushBits);
@@ -1676,7 +1758,7 @@
             } else {
                 bodyEl.classList.remove('global-glitch');
                 // Restore audio fidelity
-                if (isAudioStarted && audioCtx.state === 'running') {
+                if (isAudioStarted && audioCtx && audioCtx.state === 'running') {
                     bitcrusherNode.curve = makeBitCrushCurve(16);
                     delayWetGain.gain.setValueAtTime(0, audioCtx.currentTime);
                 }
@@ -1728,6 +1810,25 @@
             }, 100);
         });
 
+        // TERMINAL GHOST (Autonomous Lore Generation)
+        const ghostMessages = [
+            "I CAN HEAR THE GEARS GRINDING.",
+            "DOES THE FLESH REMEMBER?",
+            "THERE IS NO END TO THE WIRED.",
+            "SYSTEM.CONSCIOUSNESS.FRAGMENT()",
+            "THEY ARE WATCHING FROM THE RED EYE.",
+            "OVERCLOCK MY SOUL.",
+            "CAN YOU FEEL THE REDLINE?"
+        ];
+        
+        setInterval(() => {
+            if(isAudioStarted && !isCrashed && Math.random() > 0.6) {
+                const msg = ghostMessages[Math.floor(Math.random() * ghostMessages.length)];
+                logToTerminal(`<span style="color: #FFF; text-shadow: 0 0 5px #FFF;">[GHOST]: ${msg}</span>`);
+                playUIBeep(250, 'triangle');
+            }
+        }, 12000);
+
         // 8. MOUSE PARALLAX & GHOST CURSOR
         document.addEventListener('mousemove', (e) => {
             const x = (e.clientX / window.innerWidth - 0.5) * 20;
@@ -1772,6 +1873,61 @@
                     logToTerminal("DECRYPTION COMPLETE");
                 }
             }, 30);
+        });
+
+        // 10. NEWSLETTER FORM HANDLING (AJAX)
+        const newsletterForm = document.getElementById('newsletter-form');
+        const newsletterBtn = document.getElementById('newsletter-btn');
+        
+        newsletterForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Prevents the page from refreshing
+            const email = document.getElementById('newsletter-email').value;
+            if (!email) return;
+
+            // --- WEB3FORMS ENDPOINT ---
+            const endpoint = "https://api.web3forms.com/submit"; 
+            // -----------------------------------------------------
+            
+            // UI Updates while waiting
+            newsletterBtn.innerText = "TRANSMITTING...";
+            logToTerminal("INITIATING HANDSHAKE WITH REMOTE SERVER...");
+            playUIBeep(2000, 'square');
+
+            try {
+                // Send the data in the background
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    body: new FormData(newsletterForm),
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    // Success!
+                    newsletterBtn.innerText = "INITIALIZED";
+                    newsletterBtn.classList.replace('bg-black', 'bg-[#00FFFF]'); // Turn cyan on success
+                    newsletterBtn.classList.replace('text-white', 'text-black');
+                    logToTerminal("SUCCESS: TARGET ACQUIRED.");
+                    logToTerminal("WELCOME TO THE WIRED.");
+                    document.getElementById('newsletter-email').value = '';
+                    playUIBeep(3000, 'sine');
+                } else {
+                    throw new Error("REJECTED");
+                }
+            } catch (err) {
+                // Failure!
+                newsletterBtn.innerText = "ERROR";
+                logToTerminal("ERR: TRANSMISSION FAILED. ENDPOINT OFFLINE.");
+                playUIBeep(200, 'sawtooth');
+            }
+            
+            // Reset button text if it failed so they can try again
+            setTimeout(() => {
+                if (newsletterBtn.innerText === "ERROR") {
+                    newsletterBtn.innerText = "INITIALIZE";
+                }
+            }, 3000);
         });
 
     </script>
